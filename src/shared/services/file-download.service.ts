@@ -8,7 +8,7 @@ import { AxiosResponse } from 'axios';
 @Injectable()
 export class FileDownloadService {
   private readonly logger = new Logger(FileDownloadService.name);
-  private readonly tempDir = join(process.cwd(), 'temp');
+  private readonly tempDir = join('/', 'tmp');
 
   constructor(private readonly httpService: HttpService) {
     // Ensure temp directory exists

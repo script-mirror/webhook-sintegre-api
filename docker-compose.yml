@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        GITHUB_NPM_TOKEN_ARG: ${GITHUB_NPM_TOKEN}
+      dockerfile: Dockerfile
+    container_name: sintegre-webhook-app
+    env_file:
+      - .env
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      # Add common environment variables
+      TZ: America/Sao_Paulo
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health/liveness']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - server_database_network
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+
+networks:
+  server_database_network:
+    external: true

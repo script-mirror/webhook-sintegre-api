@@ -12,7 +12,7 @@ services:
     env_file:
       - .env
     ports:
-      - '3000:3000'
+      - '6002:3000'
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       TZ: America/Sao_Paulo

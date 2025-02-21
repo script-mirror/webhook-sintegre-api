@@ -12,13 +12,27 @@ COPY .npmrc ./.npmrc
 FROM base AS prod-deps
 RUN --mount=type=secret,id=GITHUB_NPM_TOKEN \
     --mount=type=cache,id=pnpm,target=/pnpm/store \
-    GITHUB_NPM_TOKEN=$(cat /run/secrets/GITHUB_NPM_TOKEN) \
+    if [ -n "$GITHUB_NPM_TOKEN" ]; then \
+        echo "Using GITHUB_NPM_TOKEN from environment variable"; \
+    elif [ -f /run/secrets/GITHUB_NPM_TOKEN ]; then \
+        export GITHUB_NPM_TOKEN=$(cat /run/secrets/GITHUB_NPM_TOKEN); \
+        echo "Using GITHUB_NPM_TOKEN from Docker secret"; \
+    else \
+        echo "Warning: GITHUB_NPM_TOKEN not found in environment or secrets"; \
+    fi && \
     pnpm install --prod --frozen-lockfile --ignore-scripts
 
 FROM base AS build
 RUN --mount=type=secret,id=GITHUB_NPM_TOKEN \
     --mount=type=cache,id=pnpm,target=/pnpm/store \
-    GITHUB_NPM_TOKEN=$(cat /run/secrets/GITHUB_NPM_TOKEN) \
+    if [ -n "$GITHUB_NPM_TOKEN" ]; then \
+        echo "Using GITHUB_NPM_TOKEN from environment variable"; \
+    elif [ -f /run/secrets/GITHUB_NPM_TOKEN ]; then \
+        export GITHUB_NPM_TOKEN=$(cat /run/secrets/GITHUB_NPM_TOKEN); \
+        echo "Using GITHUB_NPM_TOKEN from Docker secret"; \
+    else \
+        echo "Warning: GITHUB_NPM_TOKEN not found in environment or secrets"; \
+    fi && \
     pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . /app

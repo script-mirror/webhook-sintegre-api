@@ -117,7 +117,7 @@ importers:
         specifier: ^29.5.2
         version: 29.5.13
       '@types/node':
-        specifier: ^20.3.1
+        specifier: ^20.16.12
         version: 20.16.12
       '@types/supertest':
         specifier: ^6.0.0

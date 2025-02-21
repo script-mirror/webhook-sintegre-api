@@ -1,0 +1,87 @@
+### Variables
+@baseUrl = http://localhost:3000/api/webhooks
+@webhookId = 65d4f1234567890abcdef123
+
+### Create a new webhook
+POST {{baseUrl}}/sintegre
+Content-Type: application/json
+
+{
+  "nome": "IPDO (Informativo Preliminar Diário da Operação)",
+  "processo": "Operação em Tempo Real",
+  "dataProduto": "20/02/2025",
+  "macroProcesso": "Operação do Sistema",
+  "periodicidade": "2025-02-20T00:00:00",
+  "periodicidadeFinal": "2025-02-20T23:59:59",
+  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvNy8zOS9Qcm9kdXRvcy8xNTUvSVBETy0yMC0wMi0yMDI1LnBkZiIsInVzZXJuYW1lIjoicm9kcmlnby50ZW5vcmlvQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IklQRE8gKEluZm9ybWF0aXZvIFByZWxpbWluYXIgRGnDoXJpbyBkYSBPcGVyYcOnw6NvKSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQwMjI4ODkzLCJuYmYiOjE3NDAxNDIyNTN9._EmNRZ-XMyiYCHvp7u4ftJkHbxIDDD3e-fAxwclK3uE"
+}
+
+### List all webhooks
+GET {{baseUrl}}
+
+### List webhooks with filters
+GET {{baseUrl}}?startDate=2024-02-01&endDate=2024-02-29&status=SUCCESS
+
+### Get webhook by ID
+GET {{baseUrl}}/{{webhookId}}
+
+### Get download URL for webhook file
+GET {{baseUrl}}/{{webhookId}}/download
+
+### Get webhook metrics
+GET {{baseUrl}}/metrics
+
+### Get webhook metrics with date range
+GET {{baseUrl}}/metrics?startDate=2024-02-01&endDate=2024-02-29
+
+### Example responses:
+
+# Create webhook response
+# {
+#   "id": "65d4f1234567890abcdef123",
+#   "nome": "IPDO (Informativo Preliminar Diário da Operação)",
+#   "processo": "Operação em Tempo Real",
+#   "dataProduto": "20/02/2025",
+#   "macroProcesso": "Operação do Sistema",
+#   "periodicidade": "2025-02-20T00:00:00",
+#   "periodicidadeFinal": "2025-02-20T23:59:59",
+#   "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=example-token",
+#   "downloadStatus": "PENDING",
+#   "extraField1": "This extra field will be accepted and stored",
+#   "extraField2": {
+#     "nested": "This nested extra field will also be stored"
+#   },
+#   "createdAt": "2024-02-20T10:30:00.000Z",
+#   "updatedAt": "2024-02-20T10:30:00.000Z"
+# }
+
+# Metrics response
+# {
+#   "total": {
+#     "total": 100,
+#     "success": 80,
+#     "failed": 15,
+#     "pending": 5
+#   },
+#   "daily": [
+#     {
+#       "_id": "2024-02-19",
+#       "count": 50,
+#       "success": 40,
+#       "failed": 8,
+#       "pending": 2
+#     },
+#     {
+#       "_id": "2024-02-20",
+#       "count": 50,
+#       "success": 40,
+#       "failed": 7,
+#       "pending": 3
+#     }
+#   ]
+# }
+
+# Download URL response
+# {
+#   "url": "https://your-bucket.s3.amazonaws.com/webhooks/65d4f1234567890abcdef123/file.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=..."
+# } 

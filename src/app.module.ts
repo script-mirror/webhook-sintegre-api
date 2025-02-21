@@ -8,6 +8,8 @@ import { HttpModule } from '@nestjs/axios';
 import { HealthModule } from './health/health.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpRequestBodyInterceptor } from './utils/http.interceptor';
+import { MongooseModule } from '@nestjs/mongoose';
+import databaseConfig from './config/database.config';
 
 @Module({
   imports: [
@@ -15,6 +17,10 @@ import { HttpRequestBodyInterceptor } from './utils/http.interceptor';
     HttpModule,
     HealthModule,
     ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      load: [databaseConfig],
+      isGlobal: true,
+    }),
     AuthModule.registerAsync({
       //Docs: https://github.com/raizen-energy/raizen-power-lib-nestjs-cognito
       imports: [ConfigModule],
@@ -31,8 +37,14 @@ import { HttpRequestBodyInterceptor } from './utils/http.interceptor';
             userPoolId: configService.getOrThrow('AWS_COGNITO_USER_POOL_ID'),
           },
         ],
+        insecurelyDisableAuth:
+          configService.get('INSECURELY_DESABLE_AUTH') === 'true',
         // List of URLs which bypass authentication
-        requestUrlExceptions: ['/health/liveness', '/health/readiness'],
+        requestUrlExceptions: [
+          '/health/liveness',
+          '/health/readiness',
+          '/api/webhooks/sintegre',
+        ],
         // Optional: name of the HTTP header containing the JWT token as a value. "Bearer " will be removed from the value.
         requestHeaderName: ['authorization', 'x-cognito-token'],
       }),
@@ -67,6 +79,13 @@ import { HttpRequestBodyInterceptor } from './utils/http.interceptor';
         },
       },
       exclude: ['/health/liveness', '/health/readiness'],
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('database.uri'),
+      }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [],

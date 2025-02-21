@@ -3,49 +3,188 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
+  Query,
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { WebhookSintegreService } from './webhook-sintegre.service';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
-import { UpdateWebhookSintegreDto } from './dto/update-webhook-sintegre.dto';
-import { AuthUser } from '@raizen-energy/nestjs-cognito';
+import { WebhookSintegre } from './schemas/webhook-sintegre.schema';
 
-@Controller('webhook-sintegre')
+type WebhookQuery = {
+  createdAt?: {
+    $gte?: Date;
+    $lte?: Date;
+  };
+  downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+};
+
+@ApiTags('Webhook Sintegre')
+@Controller('api/webhooks')
 export class WebhookSintegreController {
+  private readonly logger = new Logger(WebhookSintegreController.name);
+
   constructor(private readonly service: WebhookSintegreService) {}
 
-  @Post()
-  create(
-    @Body() createWebhookSintegreDto: CreateWebhookSintegreDto,
-    @AuthUser() user,
-  ) {
-    // Logs JWT payload, if user is authenticated
-    console.log({ user });
-    return this.service.create(createWebhookSintegreDto);
+  @Post('sintegre')
+  @ApiOperation({ summary: 'Receive webhook from Sintegre' })
+  @ApiResponse({
+    status: 201,
+    description: 'Webhook received and processing started',
+    type: CreateWebhookSintegreDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid webhook payload' })
+  async create(
+    @Body() createDto: CreateWebhookSintegreDto & Record<string, unknown>,
+  ): Promise<WebhookSintegre> {
+    try {
+      this.logger.debug(`Receiving webhook: ${JSON.stringify(createDto)}`);
+      return await this.service.create(createDto);
+    } catch (error) {
+      this.logger.error(`Failed to process webhook: ${error.message}`);
+      throw new BadRequestException('Failed to process webhook');
+    }
   }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  @ApiOperation({ summary: 'List all webhooks' })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['PENDING', 'SUCCESS', 'FAILED'],
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of webhooks',
+    type: [CreateWebhookSintegreDto],
+  })
+  async findAll(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('status') status?: 'PENDING' | 'SUCCESS' | 'FAILED',
+  ): Promise<WebhookSintegre[]> {
+    try {
+      const query: WebhookQuery = {};
+
+      if (startDate || endDate) {
+        query.createdAt = {};
+        if (startDate) {
+          const startDateTime = new Date(startDate);
+          if (isNaN(startDateTime.getTime())) {
+            throw new BadRequestException('Invalid startDate format');
+          }
+          query.createdAt.$gte = startDateTime;
+        }
+        if (endDate) {
+          const endDateTime = new Date(endDate);
+          if (isNaN(endDateTime.getTime())) {
+            throw new BadRequestException('Invalid endDate format');
+          }
+          query.createdAt.$lte = endDateTime;
+        }
+      }
+
+      if (status) {
+        query.downloadStatus = status;
+      }
+
+      return await this.service.findAll(query);
+    } catch (error) {
+      this.logger.error(`Failed to fetch webhooks: ${error.message}`);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch webhooks');
+    }
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  @ApiOperation({ summary: 'Get webhook details by ID' })
+  @ApiParam({ name: 'id', description: 'Webhook ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhook details',
+    type: WebhookSintegre,
+  })
+  @ApiResponse({ status: 404, description: 'Webhook not found' })
+  async findOne(@Param('id') id: string): Promise<WebhookSintegre> {
+    try {
+      const webhook = await this.service.findOne(id);
+      if (!webhook) {
+        throw new NotFoundException(`Webhook #${id} not found`);
+      }
+      return webhook;
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(`Failed to fetch webhook ${id}: ${error.message}`);
+      throw new InternalServerErrorException('Failed to fetch webhook');
+    }
   }
 
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateWebhookSintegreDto: UpdateWebhookSintegreDto,
+  @Get(':id/download')
+  @ApiOperation({ summary: 'Get download URL for webhook file' })
+  @ApiParam({ name: 'id', description: 'Webhook ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Signed URL for file download',
+    type: String,
+  })
+  @ApiResponse({ status: 404, description: 'Webhook or file not found' })
+  async getDownloadUrl(@Param('id') id: string): Promise<{ url: string }> {
+    try {
+      const url = await this.service.getDownloadUrl(id);
+      return { url };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      this.logger.error(
+        `Failed to get download URL for webhook ${id}: ${error.message}`,
+      );
+      throw new InternalServerErrorException('Failed to generate download URL');
+    }
+  }
+
+  @Get('metrics')
+  @ApiOperation({ summary: 'Get webhook metrics' })
+  @ApiQuery({ name: 'startDate', required: false, type: String })
+  @ApiQuery({ name: 'endDate', required: false, type: String })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhook metrics and statistics',
+  })
+  async getMetrics(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.service.update(+id, updateWebhookSintegreDto);
-  }
+    try {
+      const start = startDate ? new Date(startDate) : undefined;
+      const end = endDate ? new Date(endDate) : undefined;
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(+id);
+      if (startDate && isNaN(start.getTime())) {
+        throw new BadRequestException('Invalid startDate format');
+      }
+      if (endDate && isNaN(end.getTime())) {
+        throw new BadRequestException('Invalid endDate format');
+      }
+
+      return await this.service.getMetrics(start, end);
+    } catch (error) {
+      this.logger.error(`Failed to get metrics: ${error.message}`);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch metrics');
+    }
   }
 }

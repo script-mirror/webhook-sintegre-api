@@ -1,6 +1,8 @@
 ARG NODE_IMAGE_VERSION=22-alpine
+ARG GITHUB_NPM_TOKEN
 
 FROM node:${NODE_IMAGE_VERSION} AS base
+ENV GITHUB_NPM_TOKEN=${GITHUB_NPM_TOKEN}
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -10,28 +12,22 @@ COPY pnpm-lock.yaml ./pnpm-lock.yaml
 COPY .npmrc ./.npmrc
 
 FROM base AS prod-deps
-RUN --mount=type=secret,id=GITHUB_NPM_TOKEN \
-    --mount=type=cache,id=pnpm,target=/pnpm/store \
-    if [ -n "$GITHUB_NPM_TOKEN" ]; then \
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    if [ -n "${GITHUB_NPM_TOKEN}" ]; then \
+        echo "//npm.pkg.github.com/:_authToken=${GITHUB_NPM_TOKEN}" > .npmrc && \
         echo "Using GITHUB_NPM_TOKEN from environment variable"; \
-    elif [ -f /run/secrets/GITHUB_NPM_TOKEN ]; then \
-        export GITHUB_NPM_TOKEN=$(cat /run/secrets/GITHUB_NPM_TOKEN); \
-        echo "Using GITHUB_NPM_TOKEN from Docker secret"; \
     else \
-        echo "Warning: GITHUB_NPM_TOKEN not found in environment or secrets"; \
+        echo "Error: GITHUB_NPM_TOKEN not found in environment" && exit 1; \
     fi && \
     pnpm install --prod --frozen-lockfile --ignore-scripts
 
 FROM base AS build
-RUN --mount=type=secret,id=GITHUB_NPM_TOKEN \
-    --mount=type=cache,id=pnpm,target=/pnpm/store \
-    if [ -n "$GITHUB_NPM_TOKEN" ]; then \
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    if [ -n "${GITHUB_NPM_TOKEN}" ]; then \
+        echo "//npm.pkg.github.com/:_authToken=${GITHUB_NPM_TOKEN}" > .npmrc && \
         echo "Using GITHUB_NPM_TOKEN from environment variable"; \
-    elif [ -f /run/secrets/GITHUB_NPM_TOKEN ]; then \
-        export GITHUB_NPM_TOKEN=$(cat /run/secrets/GITHUB_NPM_TOKEN); \
-        echo "Using GITHUB_NPM_TOKEN from Docker secret"; \
     else \
-        echo "Warning: GITHUB_NPM_TOKEN not found in environment or secrets"; \
+        echo "Error: GITHUB_NPM_TOKEN not found in environment" && exit 1; \
     fi && \
     pnpm install --frozen-lockfile --ignore-scripts
 

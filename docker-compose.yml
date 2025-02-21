@@ -5,7 +5,8 @@ services:
     build:
       context: .
       args:
-        GITHUB_NPM_TOKEN_ARG: ${GITHUB_NPM_TOKEN}
+        # Pass the token as a build argument
+        GITHUB_NPM_TOKEN: ${GITHUB_NPM_TOKEN}
       dockerfile: Dockerfile
     container_name: sintegre-webhook-app
     env_file:
@@ -16,6 +17,8 @@ services:
       NODE_ENV: ${NODE_ENV}
       # Add common environment variables
       TZ: America/Sao_Paulo
+      # Pass the token as an environment variable
+      GITHUB_NPM_TOKEN: ${GITHUB_NPM_TOKEN}
     restart: unless-stopped
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:3000/health/liveness']

@@ -84,6 +84,8 @@ import databaseConfig from './config/database.config';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('DATABASE_URI'),
+        retryAttempts: 3,
+        retryDelay: 1000,
       }),
       inject: [ConfigService],
     }),

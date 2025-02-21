@@ -83,7 +83,7 @@ import databaseConfig from './config/database.config';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('database.uri'),
+        uri: configService.get<string>('DATABASE_URI'),
       }),
       inject: [ConfigService],
     }),

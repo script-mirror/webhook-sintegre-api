@@ -1,0 +1,60 @@
+name: Provisioning
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials (DEV/HML)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_DEV }}:role/gha-oidc-power-role
+          aws-region: ${{ vars.AWS_REGION }}
+      
+      - name: Login to Amazon ECR (DEV/HML)
+        id: login-ecr-dev
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: "Creating ECR Repository (DEV/HML)"
+        run: |
+          aws ecr create-repository \
+          --repository-name ${{ vars.APP_NAME }}
+
+      - name: Configure AWS Credentials (PRD)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_PRD }}:role/gha-oidc-power-role
+          aws-region: ${{ vars.AWS_REGION }}
+      
+      - name: Login to Amazon ECR (PRD)
+        id: login-ecr-prd
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: "Creating ECR Repository (PRD)"
+        run: |
+          aws ecr create-repository \
+          --repository-name ${{ vars.APP_NAME }}
+
+      - name: "Build Docker Image"
+        run: |
+          docker build . --tag image:latest \
+          --tag ${{ steps.login-ecr-dev.outputs.registry }}/${{ vars.APP_NAME }}:${{ github.run_number }} \
+          --tag ${{ steps.login-ecr-dev.outputs.registry }}/${{ vars.APP_NAME }}:provision \
+          --tag ${{ steps.login-ecr-dev.outputs.registry }}/${{ vars.APP_NAME }}:latest \
+          --tag ${{ steps.login-ecr-prd.outputs.registry }}/${{ vars.APP_NAME }}:${{ github.run_number }} \
+          --tag ${{ steps.login-ecr-prd.outputs.registry }}/${{ vars.APP_NAME }}:provision \
+          --tag ${{ steps.login-ecr-prd.outputs.registry }}/${{ vars.APP_NAME }}:latest
+
+      - name: Pushes to Amazon ECR
+        run: |
+          docker push ${{ steps.login-ecr-dev.outputs.registry }}/${{ vars.APP_NAME }} --all-tags
+          docker push ${{ steps.login-ecr-prd.outputs.registry }}/${{ vars.APP_NAME }} --all-tags

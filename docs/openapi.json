@@ -1,0 +1,1 @@
+{"openapi":"3.0.0","paths":{},"info":{"title":"MockedAppName","description":"MockedAppDescription","version":"MockedAppVersion","contact":{}},"tags":[],"servers":[],"components":{"securitySchemes":{"COGNITO_AUTH":{"type":"apiKey","in":"header","name":"x-cognito-token","description":"Enter x-cognito-token"}},"schemas":{}}}

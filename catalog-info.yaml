@@ -1,0 +1,32 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: raizen-power-trading-api-webhook-sintegre
+  description: webhook-sintegre
+  annotations:
+    sonarqube.org/project-key: raizen-power-trading-api-webhook-sintegre
+    github.com/project-slug: raizen-energy/raizen-power-trading-api-webhook-sintegre
+    argocd/app-selector: app=raizen-power-trading-api-webhook-sintegre
+    backstage.io/kubernetes-id: raizen-power-trading-api-webhook-sintegre
+spec:
+  type: service
+  owner: group:raizen-power
+  system: portal-trading-etrm
+  lifecycle: development
+  providesApis:
+    - raizen-power-trading-api-webhook-sintegre
+  helm:
+    enabled: true
+    gitops-slug: raizen-devops/raizen-power-trading-api-webhook-sintegre-gitops
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: raizen-power-trading-api-webhook-sintegre
+  description: webhook-sintegre
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: group:raizen-power
+  definition:
+    $text: https://github.com/raizen-energy/raizen-power-trading-api-webhook-sintegre/blob/main/docs/openapi.json

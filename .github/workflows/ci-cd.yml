@@ -1,0 +1,20 @@
+name: CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    paths-ignore:
+      - '**.md'
+      - 'catalog-info.yaml'
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  cicd:
+    uses: raizen-energy/raizen-power-github-workflows/.github/workflows/ci-cd-nest-app.yaml@main
+    secrets: inherit
+    with:
+      pnpm-version: 9

@@ -26,6 +26,16 @@ async function bootstrap() {
   const document = createSwaggerDocument(app);
   SwaggerModule.setup('api', app, document);
 
+  app.enableCors({
+    origin: [
+      'http://localhost:4200',
+      'https://main.d2xsdrugrvc2p.amplifyapp.com',
+      'https://qa.d2xsdrugrvc2p.amplifyapp.com',
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
   await app.listen({
     host: '0.0.0.0',
     port: 3000,

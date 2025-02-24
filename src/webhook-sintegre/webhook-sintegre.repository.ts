@@ -171,4 +171,16 @@ export class WebhookSintegreRepository {
       throw error;
     }
   }
+
+  async getTimeline(): Promise<WebhookSintegre[]> {
+    try {
+      return await this.webhookModel
+        .find()
+        .sort({ nome: 1, createdAt: -1 })
+        .exec();
+    } catch (error) {
+      this.logger.error(`Failed to fetch webhook timeline: ${error.message}`);
+      throw error;
+    }
+  }
 }

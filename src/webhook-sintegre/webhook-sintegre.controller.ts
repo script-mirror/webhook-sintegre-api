@@ -20,6 +20,7 @@ import {
 import { WebhookSintegreService } from './webhook-sintegre.service';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { WebhookSintegre } from './schemas/webhook-sintegre.schema';
+import { WebhookTimelineResponseDto } from './dto/webhook-sintegre-timeline.dto';
 
 type WebhookQuery = {
   createdAt?: {
@@ -186,5 +187,16 @@ export class WebhookSintegreController {
       }
       throw new InternalServerErrorException('Failed to fetch metrics');
     }
+  }
+
+  @Get('timeline')
+  @ApiOperation({ summary: 'Get webhook events timeline grouped by name' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the webhook events timeline grouped by name',
+    type: WebhookTimelineResponseDto,
+  })
+  async getTimeline(): Promise<WebhookTimelineResponseDto> {
+    return this.service.getTimeline();
   }
 }

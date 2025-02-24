@@ -91,6 +91,7 @@ Ready to begin implementation. Shall we start with Phase 1?
    - GET /api/webhooks/:id
    - GET /api/webhooks/:id/download
    - GET /api/webhooks/metrics
+   - GET /api/webhooks/timeline
    - Swagger documentation
    - Error handling
    - Logging
@@ -101,6 +102,11 @@ Ready to begin implementation. Shall we start with Phase 1?
    - Status management
    - Error handling and logging
    - Metrics calculation
+   - Timeline aggregation with code reuse
+7. DTOs and Models:
+   - Implemented inheritance for code reuse
+   - Type-safe data structures
+   - Swagger documentation
 
 ### 🏗️ Next Steps
 
@@ -109,11 +115,13 @@ Ready to begin implementation. Shall we start with Phase 1?
    - Unit tests for services
    - Integration tests for endpoints
    - E2E tests for file processing
+   - Timeline feature tests
 
 2. Documentation:
    - API documentation
    - Deployment guide
    - Environment variables setup
+   - Timeline feature usage guide
 
 ### Current Focus: Testing Implementation
 
@@ -121,6 +129,7 @@ Ready to begin implementation. Shall we start with Phase 1?
 - Ensure proper error handling coverage
 - Test file processing workflow
 - Validate metrics calculations
+- Test timeline grouping and data structure
 
 ### Confidence Level: 95% ✅
 

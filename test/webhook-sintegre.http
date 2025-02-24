@@ -1,23 +1,19 @@
 ### Variables
+//@baseUrl = http://www.tradingenergiarz.com/new-webhook/api/webhooks
 @baseUrl = http://localhost:3000/api/webhooks
 @webhookId = 65d4f1234567890abcdef123
+
+@token = eyJraWQiOiJnbHlJWXFDck5tT3JQSFkyOHNHZGxJUVpkUExHUlFMMnBXbWJ6eDA3VEdFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjNDQ4ZDRlOC0zMGUxLTcwMzktNTMwYi1iN2U5YTQ5ZTZhMmMiLCJjb2duaXRvOmdyb3VwcyI6WyJ1cy1lYXN0LTFfNWpSQkxEaFNkX2F6dXJlLWFkLXJpcy1wcmQiXSwiaXNzIjoiaHR0cHM6XC9cL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tXC91cy1lYXN0LTFfNWpSQkxEaFNkIiwidmVyc2lvbiI6MiwiY2xpZW50X2lkIjoia2JiNzhsODA2NmJ2YWhjMWxraHVobG1laCIsIm9yaWdpbl9qdGkiOiIzZmYyNjZmZi1hYjI4LTRjNWQtODAwYS1iNmMxODgwMjE5ZDMiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImRlZmF1bHRcL3Rva2VuIHBob25lIG9wZW5pZCBwcm9maWxlIGVtYWlsIiwiYXV0aF90aW1lIjoxNzQwMTc5NzczLCJleHAiOjE3NDAxODMzNzMsImlhdCI6MTc0MDE3OTc3MywianRpIjoiNTFkOGM4NjQtMDQ1OS00ZWM3LTlkN2QtNTljY2JkZWM5ZTNiIiwidXNlcm5hbWUiOiJhenVyZS1hZC1yaXMtcHJkX0NTNDA2NTE3QE1pbmhhVEkuY29tLmJyIn0.c9ilzVwpKwmuHoJwyGU4vucmWuYhqpirOPsw-qF8N3Da8lBYCYo5HVi-RPs0FTTdYoUkmyFVKeaDp2WUa1wTFy7t4fqyyAOqtxatiVCYJMbHPbNyBDmqAig2kGXWp5Wfrh1IJvKt6s3Ob9ur8zFqytUsdmegleem5hxVXXYwk2lVjXSKhrMBZwJ7byPZIgEvB9ywlPf53hm2nQppv_BB6_iB4T1Xkl1pj3XYqNBDi7FMEdLSycLSxcvx7yOwMzTD26L2RbHuiyc3SdIkB-z7gUU35MnwpBuQQTz2nG4aWS9M6yniPj0IMoazQTSjAOGfCqRaNoSeDmtQYQlIzCOSOg
 
 ### Create a new webhook
 POST {{baseUrl}}/sintegre
 Content-Type: application/json
 
-{
-  "nome": "IPDO (Informativo Preliminar Diário da Operação)",
-  "processo": "Operação em Tempo Real",
-  "dataProduto": "20/02/2025",
-  "macroProcesso": "Operação do Sistema",
-  "periodicidade": "2025-02-20T00:00:00",
-  "periodicidadeFinal": "2025-02-20T23:59:59",
-  "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvNy8zOS9Qcm9kdXRvcy8xNTUvSVBETy0yMC0wMi0yMDI1LnBkZiIsInVzZXJuYW1lIjoicm9kcmlnby50ZW5vcmlvQHJhaXplbi5jb20iLCJub21lUHJvZHV0byI6IklQRE8gKEluZm9ybWF0aXZvIFByZWxpbWluYXIgRGnDoXJpbyBkYSBPcGVyYcOnw6NvKSIsIklzRmlsZSI6IlRydWUiLCJpc3MiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImF1ZCI6Imh0dHA6Ly9sb2NhbC5vbnMub3JnLmJyIiwiZXhwIjoxNzQwMjI4ODkzLCJuYmYiOjE3NDAxNDIyNTN9._EmNRZ-XMyiYCHvp7u4ftJkHbxIDDD3e-fAxwclK3uE"
-}
+{"nome":"Precipitação por Satélite.","processo":"Meteorologia e clima","dataProduto":"24/02/2025","macroProcesso":"Programação da Operação","periodicidade":"2025-02-24T00:00:00","periodicidadeFinal":"2025-02-24T23:59:59","url":"https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJVUkwiOiJodHRwczovL3NpbnRlZ3JlLm9ucy5vcmcuYnIvc2l0ZXMvOS8zOC9Qcm9kdXRvcy80ODcvcHNhdF8yNDAyMjAyNS50eHQiLCJ1c2VybmFtZSI6ImdpbHNldS5tdWhsZW5AcmFpemVuLmNvbSIsIm5vbWVQcm9kdXRvIjoiUHJlY2lwaXRhw6fDo28gcG9yIFNhdMOpbGl0ZS4iLCJJc0ZpbGUiOiJUcnVlIiwiaXNzIjoiaHR0cDovL2xvY2FsLm9ucy5vcmcuYnIiLCJhdWQiOiJodHRwOi8vbG9jYWwub25zLm9yZy5iciIsImV4cCI6MTc0MDUwMTg5NSwibmJmIjoxNzQwNDE1MjU1fQ.iS9ic0_-mvHScaLyU5jYLB0MiBHe6SF-I9SFyr28Q78"}
 
 ### List all webhooks
 GET {{baseUrl}}
+Authorization: Bearer {{token}}
 
 ### List webhooks with filters
 GET {{baseUrl}}?startDate=2024-02-01&endDate=2024-02-29&status=SUCCESS
@@ -33,6 +29,10 @@ GET {{baseUrl}}/metrics
 
 ### Get webhook metrics with date range
 GET {{baseUrl}}/metrics?startDate=2024-02-01&endDate=2024-02-29
+
+### Get webhook timeline
+GET {{baseUrl}}/timeline
+Authorization: Bearer {{token}}
 
 ### Example responses:
 
@@ -84,4 +84,61 @@ GET {{baseUrl}}/metrics?startDate=2024-02-01&endDate=2024-02-29
 # Download URL response
 # {
 #   "url": "https://your-bucket.s3.amazonaws.com/webhooks/65d4f1234567890abcdef123/file.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=..."
+# }
+
+# Timeline response
+# {
+#   "groups": [
+#     {
+#       "nome": "IPDO (Informativo Preliminar Diário da Operação)",
+#       "events": [
+#         {
+#           "id": "65d4f1234567890abcdef123",
+#           "nome": "IPDO (Informativo Preliminar Diário da Operação)",
+#           "processo": "Operação em Tempo Real",
+#           "dataProduto": "20/02/2025",
+#           "macroProcesso": "Operação do Sistema",
+#           "periodicidade": "2025-02-20T00:00:00",
+#           "periodicidadeFinal": "2025-02-20T23:59:59",
+#           "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=example-token",
+#           "downloadStatus": "SUCCESS",
+#           "s3Key": "webhooks/IPDO/65d4f1234567890abcdef123_file.pdf",
+#           "createdAt": "2024-02-20T10:30:00.000Z",
+#           "updatedAt": "2024-02-20T10:31:00.000Z"
+#         },
+#         {
+#           "id": "65d4f1234567890abcdef124",
+#           "nome": "IPDO (Informativo Preliminar Diário da Operação)",
+#           "processo": "Operação em Tempo Real",
+#           "dataProduto": "19/02/2025",
+#           "macroProcesso": "Operação do Sistema",
+#           "periodicidade": "2025-02-19T00:00:00",
+#           "periodicidadeFinal": "2025-02-19T23:59:59",
+#           "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=example-token",
+#           "downloadStatus": "FAILED",
+#           "errorMessage": "Failed to download file: Network timeout",
+#           "createdAt": "2024-02-19T10:30:00.000Z",
+#           "updatedAt": "2024-02-19T10:31:00.000Z"
+#         }
+#       ]
+#     },
+#     {
+#       "nome": "PMO (Programa Mensal da Operação)",
+#       "events": [
+#         {
+#           "id": "65d4f1234567890abcdef125",
+#           "nome": "PMO (Programa Mensal da Operação)",
+#           "processo": "Planejamento da Operação",
+#           "dataProduto": "02/2025",
+#           "macroProcesso": "Operação do Sistema",
+#           "periodicidade": "2025-02-01T00:00:00",
+#           "periodicidadeFinal": "2025-02-28T23:59:59",
+#           "url": "https://apps08.ons.org.br/ONS.Sintegre.Proxy/webhook?token=example-token",
+#           "downloadStatus": "PENDING",
+#           "createdAt": "2024-02-20T09:00:00.000Z",
+#           "updatedAt": "2024-02-20T09:00:00.000Z"
+#         }
+#       ]
+#     }
+#   ]
 # } 

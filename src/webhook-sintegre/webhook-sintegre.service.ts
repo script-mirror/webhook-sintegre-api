@@ -5,6 +5,11 @@ import { S3Service } from '../shared/services/s3.service';
 import { FileDownloadService } from '../shared/services/file-download.service';
 import { WebhookSintegre } from './schemas/webhook-sintegre.schema';
 import { unlink } from 'fs/promises';
+import {
+  WebhookTimelineResponseDto,
+  WebhookTimelineGroup,
+  WebhookTimelineEvent,
+} from './dto/webhook-sintegre-timeline.dto';
 
 type WebhookQuery = {
   createdAt?: {
@@ -122,5 +127,32 @@ export class WebhookSintegreService {
 
   async getMetrics(startDate?: Date, endDate?: Date) {
     return this.repository.getMetrics(startDate, endDate);
+  }
+
+  async getTimeline(): Promise<WebhookTimelineResponseDto> {
+    const webhooks = await this.repository.getTimeline();
+
+    // Group webhooks by nome
+    const groupedWebhooks = webhooks.reduce(
+      (groups, webhook) => {
+        const nome = webhook.nome;
+        if (!groups[nome]) {
+          groups[nome] = [];
+        }
+        groups[nome].push(webhook as WebhookTimelineEvent);
+        return groups;
+      },
+      {} as Record<string, WebhookTimelineEvent[]>,
+    );
+
+    // Transform the grouped data into the response format
+    const groups: WebhookTimelineGroup[] = Object.entries(groupedWebhooks).map(
+      ([nome, events]) => ({
+        nome,
+        events,
+      }),
+    );
+
+    return { groups };
   }
 }

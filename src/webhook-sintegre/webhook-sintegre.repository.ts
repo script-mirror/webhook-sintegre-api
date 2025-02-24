@@ -6,12 +6,13 @@ import {
   WebhookSintegreDocument,
 } from './schemas/webhook-sintegre.schema';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
+import { RetryInfo } from './types/webhook-retry.types';
 
 type WebhookUpdateData = {
   downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
   errorMessage?: string;
   s3Key?: string;
-};
+} & Partial<RetryInfo>;
 
 type WebhookQuery = {
   createdAt?: {
@@ -180,6 +181,26 @@ export class WebhookSintegreRepository {
         .exec();
     } catch (error) {
       this.logger.error(`Failed to fetch webhook timeline: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async updateForRetry(
+    id: string,
+    retryData: RetryInfo & { errorMessage: string },
+  ): Promise<WebhookSintegre> {
+    try {
+      return await this.webhookModel
+        .findByIdAndUpdate(
+          id,
+          { ...retryData, downloadStatus: 'FAILED' },
+          { new: true },
+        )
+        .exec();
+    } catch (error) {
+      this.logger.error(
+        `Failed to update webhook retry info ${id}: ${error.message}`,
+      );
       throw error;
     }
   }

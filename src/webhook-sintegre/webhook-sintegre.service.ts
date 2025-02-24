@@ -10,6 +10,10 @@ import {
   WebhookTimelineGroup,
   WebhookTimelineEvent,
 } from './dto/webhook-sintegre-timeline.dto';
+import {
+  MAX_RETRY_ATTEMPTS,
+  RETRY_DELAY_MS,
+} from './types/webhook-retry.types';
 
 type WebhookQuery = {
   createdAt?: {
@@ -54,6 +58,56 @@ export class WebhookSintegreService {
     }
   }
 
+  private async handleProcessingError(
+    error: Error,
+    webhook: WebhookSintegre,
+    nome: string,
+    webhookId: string,
+    fileUrl: string,
+  ): Promise<void> {
+    const shouldRetry = webhook.retryCount < MAX_RETRY_ATTEMPTS;
+    const nextRetryAt = shouldRetry
+      ? new Date(Date.now() + RETRY_DELAY_MS)
+      : null;
+    const retryCount = shouldRetry
+      ? webhook.retryCount + 1
+      : webhook.retryCount;
+    const retryHistory = [...webhook.retryHistory, new Date()];
+    const errorMessage = shouldRetry
+      ? error.message
+      : `Max retries (${MAX_RETRY_ATTEMPTS}) reached. Last error: ${error.message}`;
+
+    await this.repository.updateForRetry(webhookId, {
+      retryCount,
+      retryHistory,
+      nextRetryAt,
+      errorMessage,
+    });
+
+    if (shouldRetry) {
+      this.scheduleRetry(nome, webhookId, fileUrl, retryCount);
+    }
+
+    this.logger.error(
+      `File processing failed for webhook ${webhookId} (Attempt ${retryCount}/${MAX_RETRY_ATTEMPTS}): ${error.message}`,
+    );
+  }
+
+  private scheduleRetry(
+    nome: string,
+    webhookId: string,
+    fileUrl: string,
+    currentRetryCount: number,
+  ): void {
+    setTimeout(() => {
+      this.processWebhookFile(nome, webhookId, fileUrl).catch((retryError) => {
+        this.logger.error(
+          `Retry ${currentRetryCount} failed for webhook ${webhookId}: ${retryError.message}`,
+        );
+      });
+    }, RETRY_DELAY_MS);
+  }
+
   private async processWebhookFile(
     nome: string,
     webhookId: string,
@@ -75,8 +129,14 @@ export class WebhookSintegreService {
         await this.repository.updateStatus(webhookId, 'SUCCESS');
         await this.repository.update(webhookId, { s3Key });
       } catch (error) {
-        // Update webhook with error status
-        await this.repository.updateStatus(webhookId, 'FAILED', error.message);
+        const webhook = await this.repository.findOne(webhookId);
+        await this.handleProcessingError(
+          error,
+          webhook,
+          nome,
+          webhookId,
+          fileUrl,
+        );
         throw error;
       } finally {
         // Cleanup: Remove temporary file
@@ -89,10 +149,14 @@ export class WebhookSintegreService {
         }
       }
     } catch (error) {
-      this.logger.error(
-        `File processing failed for webhook ${webhookId}: ${error.message}`,
+      const webhook = await this.repository.findOne(webhookId);
+      await this.handleProcessingError(
+        error,
+        webhook,
+        nome,
+        webhookId,
+        fileUrl,
       );
-      await this.repository.updateStatus(webhookId, 'FAILED', error.message);
     }
   }
 

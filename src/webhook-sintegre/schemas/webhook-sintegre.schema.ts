@@ -52,9 +52,18 @@ export class WebhookSintegre {
   @Prop()
   errorMessage?: string;
 
+  @Prop({ type: Number, default: 0 })
+  retryCount: number;
+
+  @Prop({ type: [Date], default: [] })
+  retryHistory: Date[];
+
+  @Prop({ type: Date })
+  nextRetryAt?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-export const WebhookSintegreSchema = 
-  SchemaFactory.createForClass(WebhookSintegre); 
+export const WebhookSintegreSchema =
+  SchemaFactory.createForClass(WebhookSintegre);

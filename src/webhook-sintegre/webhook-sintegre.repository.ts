@@ -62,7 +62,7 @@ export class WebhookSintegreRepository {
 
   async findOne(id: string): Promise<WebhookSintegre> {
     try {
-      return await this.webhookModel.findById(id).exec();
+      return await this.webhookModel.findById(id).lean().exec();
     } catch (error) {
       this.logger.error(`Failed to fetch webhook ${id}: ${error.message}`);
       throw error;

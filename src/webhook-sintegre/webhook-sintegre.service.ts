@@ -123,10 +123,10 @@ export class WebhookSintegreService {
         const s3Key = `webhooks/${nome}/${webhookId + '_' + fileName}`;
 
         // Get webhook data for metadata
-        const webhook = await this.repository.findOne(webhookId);
+        const webhookData = await this.repository.findOne(webhookId);
 
         // Prepare metadata - convert webhook data to string values
-        const metadata = Object.entries(webhook).reduce(
+        const metadata = Object.entries(webhookData).reduce(
           (acc, [key, value]) => ({
             ...acc,
             [key]: String(value),

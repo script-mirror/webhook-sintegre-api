@@ -122,8 +122,20 @@ export class WebhookSintegreService {
         // Generate S3 key based on webhook data and filename
         const s3Key = `webhooks/${nome}/${webhookId + '_' + fileName}`;
 
-        // Upload to S3
-        await this.s3Service.uploadFile(filePath, s3Key);
+        // Get webhook data for metadata
+        const webhook = await this.repository.findOne(webhookId);
+
+        // Prepare metadata - convert webhook data to string values
+        const metadata = Object.entries(webhook).reduce(
+          (acc, [key, value]) => ({
+            ...acc,
+            [key]: String(value),
+          }),
+          {} as Record<string, string>,
+        );
+
+        // Upload to S3 with metadata
+        await this.s3Service.uploadFile(filePath, s3Key, metadata);
 
         // Update webhook status
         await this.repository.updateStatus(webhookId, 'SUCCESS');

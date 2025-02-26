@@ -20,7 +20,11 @@ export class S3Service {
     this.bucket = this.configService.get('AWS_S3_BUCKET');
   }
 
-  async uploadFile(filePath: string, key: string): Promise<string> {
+  async uploadFile(
+    filePath: string,
+    key: string,
+    metadata?: Record<string, string>,
+  ): Promise<string> {
     try {
       const fileStream = createReadStream(filePath);
 
@@ -28,6 +32,7 @@ export class S3Service {
         Bucket: this.bucket,
         Key: key,
         Body: fileStream,
+        Metadata: metadata,
       };
 
       const result = await this.s3.upload(uploadParams).promise();
@@ -52,4 +57,4 @@ export class S3Service {
       throw error;
     }
   }
-} 
+}

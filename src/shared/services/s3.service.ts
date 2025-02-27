@@ -20,37 +20,18 @@ export class S3Service {
     this.bucket = this.configService.get('AWS_S3_BUCKET');
   }
 
-  async uploadFile(
-    filePath: string,
-    key: string,
-    metadata?: Record<string, string>,
-  ): Promise<string> {
+  async uploadFile(filePath: string, key: string): Promise<string> {
     try {
       const fileStream = createReadStream(filePath);
 
-      // First, upload the file without metadata
       const uploadParams = {
         Bucket: this.bucket,
         Key: key,
         Body: fileStream,
       };
 
-      const uploadResult = await this.s3.upload(uploadParams).promise();
-
-      // If there's metadata, copy the object with metadata
-      if (metadata && Object.keys(metadata).length > 0) {
-        const copyParams = {
-          Bucket: this.bucket,
-          CopySource: `${this.bucket}/${key}`,
-          Key: key,
-          Metadata: metadata,
-          MetadataDirective: 'REPLACE',
-        };
-
-        await this.s3.copyObject(copyParams).promise();
-      }
-
-      return uploadResult.Key;
+      const result = await this.s3.upload(uploadParams).promise();
+      return result.Key;
     } catch (error) {
       this.logger.error(`Failed to upload file to S3: ${error.message}`);
       throw error;

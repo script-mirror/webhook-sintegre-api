@@ -34,6 +34,7 @@ export class S3Service {
         Body: fileStream,
         Metadata: metadata,
       };
+      console.log('uploadParams', uploadParams);
 
       const result = await this.s3.upload(uploadParams).promise();
       return result.Key;

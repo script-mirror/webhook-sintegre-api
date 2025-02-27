@@ -10,14 +10,41 @@ export class S3Service {
   private readonly logger = new Logger(S3Service.name);
 
   constructor(private configService: ConfigService) {
+    const region = this.configService.get('AWS_REGION');
+    const accessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
+    const bucket = this.configService.get('AWS_S3_BUCKET');
+
+    // Debug logging
+    this.logger.debug(
+      `Initializing S3 service with region: ${region}, bucket: ${bucket}`,
+    );
+    this.logger.debug(
+      `Access Key ID length: ${accessKeyId?.length ?? 'undefined'}`,
+    );
+
+    if (
+      !region ||
+      !accessKeyId ||
+      !this.configService.get('AWS_SECRET_ACCESS_KEY')
+    ) {
+      this.logger.error('Missing required AWS credentials');
+      throw new Error('Missing required AWS credentials');
+    }
+
     this.s3 = new S3({
-      region: this.configService.get('AWS_REGION'),
+      region,
       credentials: {
-        accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID'),
+        accessKeyId,
         secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY'),
       },
+      httpOptions: {
+        timeout: 5000,
+        connectTimeout: 5000,
+      },
+      maxRetries: 3,
+      retryDelayOptions: { base: 300 },
     });
-    this.bucket = this.configService.get('AWS_S3_BUCKET');
+    this.bucket = bucket;
   }
 
   async uploadFile(
@@ -35,10 +62,24 @@ export class S3Service {
         Metadata: metadata,
       };
 
+      this.logger.debug(
+        `Attempting to upload file to S3: ${key} in bucket: ${this.bucket}`,
+      );
       const result = await this.s3.upload(uploadParams).promise();
+      this.logger.debug(`Successfully uploaded file to S3: ${result.Key}`);
       return result.Key;
     } catch (error) {
       this.logger.error(`Failed to upload file to S3: ${error.message}`);
+      this.logger.error(
+        `Error details: ${JSON.stringify({
+          code: error.code,
+          statusCode: error.statusCode,
+          requestId: error.requestId,
+          time: error.time,
+          bucket: this.bucket,
+          key,
+        })}`,
+      );
       throw error;
     }
   }

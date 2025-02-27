@@ -55,15 +55,24 @@ export class S3Service {
     try {
       const fileStream = createReadStream(filePath);
 
+      // Encode the key to handle special characters and spaces
+      const encodedKey = key
+        .split('/')
+        .map((part) => encodeURIComponent(part))
+        .join('/');
+
+      this.logger.debug(`Original key: ${key}\nEncoded key: ${encodedKey}`);
+
       const uploadParams = {
         Bucket: this.bucket,
-        Key: key,
+        Key: encodedKey,
         Body: fileStream,
         Metadata: metadata,
+        ContentType: 'application/zip', // Add proper content type for zip files
       };
 
       this.logger.debug(
-        `Attempting to upload file to S3: ${key} in bucket: ${this.bucket}`,
+        `Attempting to upload file to S3: ${encodedKey} in bucket: ${this.bucket}`,
       );
       const result = await this.s3.upload(uploadParams).promise();
       this.logger.debug(`Successfully uploaded file to S3: ${result.Key}`);
@@ -78,6 +87,10 @@ export class S3Service {
           time: error.time,
           bucket: this.bucket,
           key,
+          encodedKey: key
+            .split('/')
+            .map((part) => encodeURIComponent(part))
+            .join('/'),
         })}`,
       );
       throw error;

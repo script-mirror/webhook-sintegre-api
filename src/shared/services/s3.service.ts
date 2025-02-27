@@ -28,14 +28,17 @@ export class S3Service {
     try {
       const fileStream = createReadStream(filePath);
 
+      //json encode the metadata and place it in the Metadata field
+      const metadataString = { sintegre: JSON.stringify(metadata) };
+
       const uploadParams = {
         Bucket: this.bucket,
         Key: key,
         Body: fileStream,
-        // Metadata: metadata,
+        Metadata: metadataString,
       };
 
-      console.log('metadata', metadata);
+      console.log('uploadParams', uploadParams);
 
       const result = await this.s3.upload(uploadParams).promise();
       return result.Key;

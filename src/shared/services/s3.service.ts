@@ -28,57 +28,17 @@ export class S3Service {
     try {
       const fileStream = createReadStream(filePath);
 
-      // Ensure all metadata values are strings
-      const processedMetadata = metadata
-        ? Object.entries(metadata).reduce(
-            (acc, [key, value]) => ({
-              ...acc,
-              [key]: typeof value === 'string' ? value : JSON.stringify(value),
-            }),
-            {},
-          )
-        : undefined;
-
-      this.logger.debug(
-        `Processing metadata: ${JSON.stringify(processedMetadata)}`,
-      );
-
       const uploadParams = {
         Bucket: this.bucket,
         Key: key,
         Body: fileStream,
-        Metadata: processedMetadata,
+        Metadata: metadata,
       };
-
-      this.logger.debug(
-        `Upload params: ${JSON.stringify({
-          Bucket: uploadParams.Bucket,
-          Key: uploadParams.Key,
-          Metadata: uploadParams.Metadata,
-        })}`,
-      );
 
       const result = await this.s3.upload(uploadParams).promise();
       return result.Key;
     } catch (error) {
       this.logger.error(`Failed to upload file to S3: ${error.message}`);
-      this.logger.error(
-        `Upload parameters: ${JSON.stringify({
-          bucket: this.bucket,
-          key,
-          metadata,
-          processedMetadata: metadata
-            ? Object.entries(metadata).reduce(
-                (acc, [key, value]) => ({
-                  ...acc,
-                  [key]:
-                    typeof value === 'string' ? value : JSON.stringify(value),
-                }),
-                {},
-              )
-            : undefined,
-        })}`,
-      );
       throw error;
     }
   }

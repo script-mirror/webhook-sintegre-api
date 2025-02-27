@@ -28,16 +28,29 @@ export class S3Service {
     try {
       const fileStream = createReadStream(filePath);
 
+      // First, upload the file without metadata
       const uploadParams = {
         Bucket: this.bucket,
         Key: key,
         Body: fileStream,
-        Metadata: metadata,
       };
-      console.log('uploadParams', uploadParams);
 
-      const result = await this.s3.upload(uploadParams).promise();
-      return result.Key;
+      const uploadResult = await this.s3.upload(uploadParams).promise();
+
+      // If there's metadata, copy the object with metadata
+      if (metadata && Object.keys(metadata).length > 0) {
+        const copyParams = {
+          Bucket: this.bucket,
+          CopySource: `${this.bucket}/${key}`,
+          Key: key,
+          Metadata: metadata,
+          MetadataDirective: 'REPLACE',
+        };
+
+        await this.s3.copyObject(copyParams).promise();
+      }
+
+      return uploadResult.Key;
     } catch (error) {
       this.logger.error(`Failed to upload file to S3: ${error.message}`);
       throw error;

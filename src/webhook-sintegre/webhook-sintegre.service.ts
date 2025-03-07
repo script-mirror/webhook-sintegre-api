@@ -183,7 +183,7 @@ export class WebhookSintegreService {
     const productDetails = {
       function_name: dagId,
       product_details: {
-        dataProduto: `${new Date(webhook.periodicidade).toLocaleDateString('pt-BR')} - ${new Date(webhook.periodicidadeFinal).toLocaleDateString('pt-BR')}`,
+        dataProduto: webhook.dataProduto,
         enviar: true,
         macroProcesso: webhook.macroProcesso || '',
         nome: webhook.nome,

@@ -193,6 +193,9 @@ export class WebhookSintegreService {
         url: webhook.url,
         s3Key: s3Key,
         webhookId: webhookId,
+        filename: s3Key.substring(
+          s3Key.indexOf(webhookId) + webhookId.length + 1,
+        ),
       },
     };
 

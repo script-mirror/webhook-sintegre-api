@@ -18,9 +18,22 @@ export class S3Service {
       },
     });
     this.bucket = this.configService.get('AWS_S3_BUCKET');
+
+    this.logger.log({
+      message: 'S3Service initialized',
+      bucket: this.bucket,
+      region: this.configService.get('AWS_REGION'),
+    });
   }
 
   async uploadFile(filePath: string, key: string): Promise<string> {
+    this.logger.debug({
+      message: 'Starting file upload to S3',
+      filePath,
+      key,
+      bucket: this.bucket,
+    });
+
     try {
       const fileStream = createReadStream(filePath);
 
@@ -31,14 +44,37 @@ export class S3Service {
       };
 
       const result = await this.s3.upload(uploadParams).promise();
+
+      this.logger.log({
+        message: 'File successfully uploaded to S3',
+        key: result.Key,
+        bucket: this.bucket,
+        eTag: result.ETag,
+      });
+
       return result.Key;
     } catch (error) {
-      this.logger.error(`Failed to upload file to S3: ${error.message}`);
+      this.logger.error({
+        message: 'Failed to upload file to S3',
+        error: error.message,
+        code: error.code,
+        filePath,
+        key,
+        bucket: this.bucket,
+        stack: error.stack,
+      });
       throw error;
     }
   }
 
   async getSignedUrl(key: string, expiresIn = 3600): Promise<string> {
+    this.logger.debug({
+      message: 'Generating signed URL',
+      key,
+      expiresIn,
+      bucket: this.bucket,
+    });
+
     try {
       const params = {
         Bucket: this.bucket,
@@ -46,9 +82,27 @@ export class S3Service {
         Expires: expiresIn,
       };
 
-      return await this.s3.getSignedUrlPromise('getObject', params);
+      const signedUrl = await this.s3.getSignedUrlPromise('getObject', params);
+
+      this.logger.debug({
+        message: 'Successfully generated signed URL',
+        key,
+        expiresIn,
+        bucket: this.bucket,
+        urlLength: signedUrl.length,
+      });
+
+      return signedUrl;
     } catch (error) {
-      this.logger.error(`Failed to generate signed URL: ${error.message}`);
+      this.logger.error({
+        message: 'Failed to generate signed URL',
+        error: error.message,
+        code: error.code,
+        key,
+        expiresIn,
+        bucket: this.bucket,
+        stack: error.stack,
+      });
       throw error;
     }
   }

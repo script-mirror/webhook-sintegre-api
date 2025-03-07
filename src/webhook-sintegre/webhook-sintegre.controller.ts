@@ -145,7 +145,9 @@ export class WebhookSintegreController {
   @ApiResponse({ status: 404, description: 'Webhook or file not found' })
   async getDownloadUrl(@Param('id') id: string): Promise<{ url: string }> {
     try {
+      this.logger.debug(`Getting download URL for webhook ${id}`);
       const url = await this.service.getDownloadUrl(id);
+      this.logger.debug(`Download URL: ${url}`);
       return { url };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

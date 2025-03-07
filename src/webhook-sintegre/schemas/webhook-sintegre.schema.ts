@@ -44,7 +44,7 @@ export class WebhookSintegre {
     enum: ['PENDING', 'SUCCESS', 'FAILED'],
     default: 'PENDING',
   })
-  downloadStatus: 'PENDING' | 'SUCCESS' | 'FAILED';
+  downloadStatus: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
 
   @Prop()
   s3Key?: string;

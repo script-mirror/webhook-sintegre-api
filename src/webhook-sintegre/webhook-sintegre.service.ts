@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { WebhookSintegreRepository } from './webhook-sintegre.repository';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { S3Service } from '../shared/services/s3.service';
@@ -274,5 +279,34 @@ export class WebhookSintegreService {
     );
 
     return { groups };
+  }
+
+  async reprocess(id: string): Promise<WebhookSintegre> {
+    try {
+      const webhook = await this.findOne(id);
+
+      if (!webhook.s3Key) {
+        throw new BadRequestException(
+          'Cannot reprocess webhook without a processed file',
+        );
+      }
+
+      if (
+        !(
+          webhook.downloadStatus == 'SUCCESS' ||
+          webhook.downloadStatus == 'PROCESSED'
+        )
+      ) {
+        throw new BadRequestException(
+          'Cannot reprocess webhook that has not been successfully downloaded',
+        );
+      }
+
+      await this.sendToAirflow(id);
+      return webhook;
+    } catch (error) {
+      this.logger.error(`Failed to reprocess webhook ${id}: ${error.message}`);
+      throw error;
+    }
   }
 }

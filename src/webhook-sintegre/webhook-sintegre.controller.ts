@@ -199,4 +199,25 @@ export class WebhookSintegreController {
   async getTimeline(): Promise<WebhookTimelineResponseDto> {
     return this.service.getTimeline();
   }
+
+  @Post(':id/reprocess')
+  @ApiOperation({ summary: 'Reprocess webhook by sending it to Airflow again' })
+  @ApiParam({ name: 'id', description: 'Webhook ID to reprocess' })
+  @ApiResponse({
+    status: 200,
+    description: 'Webhook reprocessing started successfully',
+    type: WebhookSintegre,
+  })
+  @ApiResponse({ status: 404, description: 'Webhook not found' })
+  @ApiResponse({ status: 400, description: 'Webhook cannot be reprocessed' })
+  async reprocess(@Param('id') id: string): Promise<WebhookSintegre> {
+    try {
+      return await this.service.reprocess(id);
+    } catch (error) {
+      this.logger.error(`Failed to reprocess webhook ${id}: ${error.message}`);
+      if (error instanceof NotFoundException) throw error;
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Failed to reprocess webhook');
+    }
+  }
 }

@@ -239,7 +239,11 @@ export class WebhookSintegreService {
   async getDownloadUrl(id: string): Promise<string> {
     const webhook = await this.findOne(id);
 
-    if (!webhook.s3Key || webhook.downloadStatus !== 'SUCCESS') {
+    if (
+      !webhook.s3Key ||
+      (webhook.downloadStatus !== 'SUCCESS' &&
+        webhook.downloadStatus !== 'PROCESSED')
+    ) {
       throw new NotFoundException('File not available for download');
     }
 

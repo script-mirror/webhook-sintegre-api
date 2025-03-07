@@ -8,7 +8,7 @@ export interface WebhookSintegre extends Document {
   periodicidade: string;
   periodicidadeFinal: string;
   url: string;
-  downloadStatus: 'PENDING' | 'SUCCESS' | 'FAILED';
+  downloadStatus: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
   s3Key?: string;
   errorMessage?: string;
   createdAt: Date;

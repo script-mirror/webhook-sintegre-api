@@ -14,7 +14,7 @@ import {
   MAX_RETRY_ATTEMPTS,
   RETRY_DELAY_MS,
 } from './types/webhook-retry.types';
-
+import { ConfigService } from '@nestjs/config';
 type WebhookQuery = {
   createdAt?: {
     $gte?: Date;
@@ -31,6 +31,7 @@ export class WebhookSintegreService {
     private readonly repository: WebhookSintegreRepository,
     private readonly s3Service: S3Service,
     private readonly fileDownloadService: FileDownloadService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -128,6 +129,8 @@ export class WebhookSintegreService {
         // Update webhook status
         await this.repository.updateStatus(webhookId, 'SUCCESS');
         await this.repository.update(webhookId, { s3Key });
+
+        await this.sendToAirflow(webhookId);
       } catch (error) {
         const webhook = await this.repository.findOne(webhookId);
         await this.handleProcessingError(
@@ -157,6 +160,59 @@ export class WebhookSintegreService {
         webhookId,
         fileUrl,
       );
+    }
+  }
+
+  private async sendToAirflow(webhookId: string): Promise<void> {
+    const webhook = await this.repository.findOne(webhookId);
+    const s3Key = webhook.s3Key;
+
+    const airflowUrl = this.configService.getOrThrow('AIRFLOW_URL');
+    const airflowUser = this.configService.getOrThrow('AIRFLOW_USER');
+    const airflowPassword = this.configService.getOrThrow('AIRFLOW_PASSWORD');
+    const dagId = this.configService.getOrThrow('AIRFLOW_DAG_ID');
+
+    const triggerDagUrl = `${airflowUrl}/dags/${dagId}/dagRuns`;
+    const authHeader = `Basic ${Buffer.from(`${airflowUser}:${airflowPassword}`).toString('base64')}`;
+
+    const productDetails = {
+      function_name: dagId,
+      product_details: {
+        dataProduto: new Date(webhook.dataProduto).toLocaleDateString('pt-BR'),
+        enviar: true,
+        macroProcesso: webhook.macroProcesso || '',
+        nome: webhook.nome,
+        periodicidade: new Date(webhook.periodicidade).toISOString(),
+        periodicidadeFinal: new Date(webhook.periodicidadeFinal).toISOString(),
+        processo: webhook.processo || '',
+        url: webhook.url,
+        s3Key: s3Key,
+        webhookId: webhookId,
+      },
+    };
+
+    try {
+      const response = await fetch(triggerDagUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ conf: productDetails }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to trigger Airflow DAG: ${errorText}`);
+      }
+
+      this.logger.log(
+        `Successfully triggered Airflow DAG ${dagId} for webhook ${webhookId}`,
+      );
+      await this.repository.updateStatus(webhookId, 'PROCESSED');
+    } catch (error) {
+      this.logger.error(`Error triggering Airflow DAG: ${error.message}`);
+      throw error;
     }
   }
 

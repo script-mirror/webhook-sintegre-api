@@ -9,7 +9,7 @@ import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { RetryInfo } from './types/webhook-retry.types';
 
 type WebhookUpdateData = {
-  downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+  downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
   errorMessage?: string;
   s3Key?: string;
 } & Partial<RetryInfo>;
@@ -19,7 +19,7 @@ type WebhookQuery = {
     $gte?: Date;
     $lte?: Date;
   };
-  downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+  downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
 };
 
 type WebhookMetricsStage = {
@@ -85,7 +85,7 @@ export class WebhookSintegreRepository {
 
   async updateStatus(
     id: string,
-    status: 'PENDING' | 'SUCCESS' | 'FAILED',
+    status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED',
     errorMessage?: string,
   ): Promise<WebhookSintegre> {
     try {

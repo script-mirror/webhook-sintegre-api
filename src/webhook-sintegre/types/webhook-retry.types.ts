@@ -1,10 +1,11 @@
-export const MAX_RETRY_ATTEMPTS = 5;
-export const RETRY_DELAY_MS = 60000; // 1 minute in milliseconds
+export const MAX_RETRY_ATTEMPTS = 3;
+export const RETRY_DELAY_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface RetryInfo {
   retryCount: number;
   retryHistory: Date[];
-  nextRetryAt?: Date;
+  nextRetryAt: Date | null;
+  downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
 }
 
 export interface RetryUpdateData extends RetryInfo {

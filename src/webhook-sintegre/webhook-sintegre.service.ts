@@ -312,4 +312,37 @@ export class WebhookSintegreService {
       throw error;
     }
   }
+
+  async retryDownload(id: string): Promise<WebhookSintegre> {
+    const webhook = await this.findOne(id);
+
+    if (
+      webhook.downloadStatus === 'SUCCESS' ||
+      webhook.downloadStatus === 'PROCESSED'
+    ) {
+      throw new BadRequestException('File is already downloaded successfully');
+    }
+
+    if (!webhook.url) {
+      throw new BadRequestException('Webhook has no URL to download from');
+    }
+
+    // Reset retry counters
+    await this.repository.updateForRetry(id, {
+      retryCount: 0,
+      retryHistory: [],
+      nextRetryAt: null,
+      errorMessage: null,
+      downloadStatus: 'PENDING',
+    });
+
+    // Start the download process
+    this.processWebhookFile(webhook.nome, id, webhook.url).catch((error) => {
+      this.logger.error(
+        `Manual retry failed for webhook ${id}: ${error.message}`,
+      );
+    });
+
+    return this.findOne(id);
+  }
 }

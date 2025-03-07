@@ -220,4 +220,30 @@ export class WebhookSintegreController {
       throw new InternalServerErrorException('Failed to reprocess webhook');
     }
   }
+
+  @Post(':id/retry-download')
+  @ApiOperation({ summary: 'Manually retry downloading the webhook file' })
+  @ApiParam({ name: 'id', description: 'Webhook ID to retry download' })
+  @ApiResponse({
+    status: 200,
+    description: 'File download retry started successfully',
+    type: WebhookSintegre,
+  })
+  @ApiResponse({ status: 404, description: 'Webhook not found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot retry download for this webhook',
+  })
+  async retryDownload(@Param('id') id: string): Promise<WebhookSintegre> {
+    try {
+      return await this.service.retryDownload(id);
+    } catch (error) {
+      this.logger.error(
+        `Failed to retry download for webhook ${id}: ${error.message}`,
+      );
+      if (error instanceof NotFoundException) throw error;
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Failed to retry file download');
+    }
+  }
 }

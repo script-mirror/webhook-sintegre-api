@@ -109,6 +109,85 @@ export class FileDownloadService {
     }
   }
 
+  /**
+   * Decodes a MIME encoded-word string (RFC 2047)
+   * @param encodedWord - The encoded string in format =?charset?encoding?encoded-text?=
+   * @returns The decoded string
+   */
+  private decodeMimeEncodedWord(encodedWord: string): string {
+    try {
+      // Check if it matches the MIME encoded-word format
+      const matches = /=\?([^?]+)\?([BbQq])\?([^?]*)\?=/.exec(encodedWord);
+      if (!matches) {
+        return encodedWord;
+      }
+
+      const charset = matches[1].toLowerCase(); // e.g., 'utf-8'
+      const encoding = matches[2].toUpperCase(); // 'B' for Base64, 'Q' for Quoted-Printable
+      const encodedText = matches[3];
+
+      if (encoding === 'B') {
+        // Base64 encoding
+        const buffer = Buffer.from(encodedText, 'base64');
+        // Use a safe approach to handle the charset
+        let decodedText: string;
+        try {
+          // Try to use the charset from the header as encoding
+          // Normalize common charset names
+          const normalizedCharset = this.normalizeCharset(charset);
+          decodedText = buffer.toString(normalizedCharset as BufferEncoding);
+        } catch (err) {
+          // Fallback to utf8 if the charset is not supported
+          this.logger.warn({
+            message: `Unsupported charset "${charset}", falling back to utf8`,
+            error: err.message,
+          });
+          decodedText = buffer.toString('utf8');
+        }
+        return decodedText;
+      } else if (encoding === 'Q') {
+        // Quoted-Printable encoding (not implemented here, but could be added if needed)
+        this.logger.warn({
+          message: 'Quoted-Printable encoding not fully supported',
+          encodedWord,
+        });
+        return encodedWord;
+      }
+
+      return encodedWord;
+    } catch (error) {
+      this.logger.error({
+        message: 'Failed to decode MIME encoded word',
+        error: error.message,
+        encodedWord,
+      });
+      return encodedWord; // Return original if decoding fails
+    }
+  }
+
+  /**
+   * Normalizes charset names to Node.js BufferEncoding compatible values
+   * @param charset - The charset from the MIME header
+   * @returns A normalized charset name that can be used as BufferEncoding
+   */
+  private normalizeCharset(charset: string): string {
+    // Map of common charset names to Node.js BufferEncoding values
+    const charsetMap: Record<string, string> = {
+      'utf-8': 'utf8',
+      utf8: 'utf8',
+      ascii: 'ascii',
+      'iso-8859-1': 'latin1',
+      latin1: 'latin1',
+      binary: 'binary',
+      ucs2: 'ucs2',
+      'ucs-2': 'ucs2',
+      utf16le: 'utf16le',
+      'utf-16le': 'utf16le',
+    };
+
+    return charsetMap[charset] || 'utf8'; // Default to utf8 if not found
+  }
+
   private getFileNameFromResponse(response: AxiosResponse): string {
     this.logger.debug({
       message: 'Extracting filename from response',
@@ -121,7 +200,18 @@ export class FileDownloadService {
         contentDisposition,
       );
       if (matches != null && matches[1]) {
-        const fileName = matches[1].replace(/['"]/g, '');
+        let fileName = matches[1].replace(/['"]/g, '');
+
+        // Check if the filename is MIME encoded
+        if (fileName.startsWith('=?') && fileName.endsWith('?=')) {
+          fileName = this.decodeMimeEncodedWord(fileName);
+          this.logger.debug({
+            message: 'Decoded MIME encoded filename',
+            decodedFileName: fileName,
+            originalEncoded: matches[1],
+          });
+        }
+
         this.logger.debug({
           message: 'Filename extracted from content-disposition',
           fileName,

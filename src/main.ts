@@ -4,10 +4,9 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
-import { SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
-import { createSwaggerDocument } from './config/swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -23,14 +22,37 @@ async function bootstrap() {
   );
   app.useLogger(app.get(Logger));
 
-  const document = createSwaggerDocument(app);
-  document.servers = [
-    {
-      url: '/new-webhook'
-    }
-  ];
-  SwaggerModule.setup('api', app, document);
+  const swaggerConfig = new DocumentBuilder()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter JWT token',
+        in: 'header',
+      },
+      'access-token',
+    )
+    .addServer('/new-webhook')
+    .build();
 
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+
+  document.security = [{ 'access-token': [] }];
+
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      filter: true,
+      displayRequestDuration: true,
+      docExpansion: 'list',
+      showExtensions: true,
+      deepLinking: true,
+      operationsSorter: 'alpha',
+      tagsSorter: 'alpha',
+    },
+  });
   app.enableCors({
     origin: [
       'http://localhost:4200',

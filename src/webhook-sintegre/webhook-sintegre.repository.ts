@@ -185,6 +185,21 @@ export class WebhookSintegreRepository {
     }
   }
 
+  async getFilteredTimeline(query: {
+    nome?: string;
+    createdAt?: { $gte?: Date; $lte?: Date };
+  }): Promise<WebhookSintegre[]> {
+    try {
+      return await this.webhookModel
+        .find(query)
+        .sort({ nome: 1, createdAt: -1 })
+        .exec();
+    } catch (error) {
+      this.logger.error(`Failed to fetch filtered webhook timeline: ${error.message}`);
+      throw error;
+    }
+  }
+
   async updateForRetry(
     id: string,
     retryData: RetryInfo & { errorMessage: string },

@@ -288,6 +288,59 @@ export class WebhookSintegreService {
     return { groups };
   }
 
+  async getFilteredTimeline(
+    startDate?: Date,
+    endDate?: Date,
+    nome?: string,
+  ): Promise<WebhookTimelineResponseDto> {
+    const query: {
+      nome?: string;
+      createdAt?: {
+        $gte?: Date;
+        $lte?: Date;
+      };
+    } = {};
+
+    if (nome) {
+      query.nome = nome;
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = startDate;
+      }
+      if (endDate) {
+        query.createdAt.$lte = endDate;
+      }
+    }
+
+    const webhooks = await this.repository.getFilteredTimeline(query);
+
+    // Group webhooks by nome
+    const groupedWebhooks = webhooks.reduce(
+      (groups, webhook) => {
+        const nome = webhook.nome;
+        if (!groups[nome]) {
+          groups[nome] = [];
+        }
+        groups[nome].push(webhook as WebhookTimelineEvent);
+        return groups;
+      },
+      {} as Record<string, WebhookTimelineEvent[]>,
+    );
+
+    // Transform the grouped data into the response format
+    const groups: WebhookTimelineGroup[] = Object.entries(groupedWebhooks).map(
+      ([nome, events]) => ({
+        nome,
+        events,
+      }),
+    );
+
+    return { groups };
+  }
+
   async reprocess(id: string): Promise<WebhookSintegre> {
     try {
       const webhook = await this.findOne(id);

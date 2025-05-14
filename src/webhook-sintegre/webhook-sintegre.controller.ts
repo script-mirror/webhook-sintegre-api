@@ -202,6 +202,50 @@ export class WebhookSintegreController {
     return this.service.getTimeline();
   }
 
+  @Get('timeline/filtered')
+  @ApiOperation({ summary: 'Get filtered webhook events timeline grouped by name' })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date filter (ISO format)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date filter (ISO format)' })
+  @ApiQuery({ name: 'nome', required: false, type: String, description: 'Filter by webhook name' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the filtered webhook events timeline grouped by name',
+    type: WebhookTimelineResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid date format' })
+  async getFilteredTimeline(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('nome') nome?: string,
+  ): Promise<WebhookTimelineResponseDto> {
+    try {
+      let startDateTime: Date | undefined;
+      let endDateTime: Date | undefined;
+      
+      if (startDate) {
+        startDateTime = new Date(startDate);
+        if (isNaN(startDateTime.getTime())) {
+          throw new BadRequestException('Invalid startDate format');
+        }
+      }
+      
+      if (endDate) {
+        endDateTime = new Date(endDate);
+        if (isNaN(endDateTime.getTime())) {
+          throw new BadRequestException('Invalid endDate format');
+        }
+      }
+      
+      return this.service.getFilteredTimeline(startDateTime, endDateTime, nome);
+    } catch (error) {
+      this.logger.error(`Failed to fetch filtered timeline: ${error.message}`);
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch filtered timeline');
+    }
+  }
+
   @Post(':id/reprocess')
   @ApiOperation({ summary: 'Reprocess webhook by sending it to Airflow again' })
   @ApiParam({ name: 'id', description: 'Webhook ID to reprocess' })

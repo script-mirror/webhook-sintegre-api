@@ -24,6 +24,11 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
 
   const document = createSwaggerDocument(app);
+  document.servers = [
+    {
+      url: '/new-webhook'
+    }
+  ];
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({

@@ -34,7 +34,7 @@ async function bootstrap() {
       },
       'access-token',
     )
-    .addServer('/new-webhook')
+    .addServer('/webhook')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

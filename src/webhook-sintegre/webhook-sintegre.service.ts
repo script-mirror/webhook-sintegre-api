@@ -181,9 +181,7 @@ export class WebhookSintegreService {
     const authHeader = `Basic ${Buffer.from(`${airflowUser}:${airflowPassword}`).toString('base64')}`;
 
     const productDetails = {
-      product_details: {
         dataProduto: webhook.dataProduto,
-        enviar: true,
         macroProcesso: webhook.macroProcesso || '',
         nome: webhook.nome,
         periodicidade: new Date(webhook.periodicidade).toISOString(),
@@ -195,7 +193,6 @@ export class WebhookSintegreService {
         filename: s3Key.substring(
           s3Key.indexOf(webhookId) + webhookId.length + 1,
         ),
-      },
     };
 
     try {

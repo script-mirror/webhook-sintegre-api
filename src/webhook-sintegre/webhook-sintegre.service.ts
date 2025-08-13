@@ -181,7 +181,6 @@ export class WebhookSintegreService {
     const authHeader = `Basic ${Buffer.from(`${airflowUser}:${airflowPassword}`).toString('base64')}`;
 
     const productDetails = {
-      function_name: dagId,
       product_details: {
         dataProduto: webhook.dataProduto,
         enviar: true,

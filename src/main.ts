@@ -56,8 +56,8 @@ async function bootstrap() {
   app.enableCors({
     origin: [
       'http://localhost:4200',
-      'https://main.d2xsdrugrvc2p.amplifyapp.com',
-      'https://qa.d2xsdrugrvc2p.amplifyapp.com',
+      'https://main.d3ixpb9bpe4o0d.amplifyapp.com',
+      'https://qa.d3ixpb9bpe4o0d.amplifyapp.com',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,

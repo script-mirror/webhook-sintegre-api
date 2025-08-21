@@ -80,7 +80,7 @@ describe('createSwaggerDocument', () => {
     expect(swaggerDocument.info.description).toBe(npm_package_description);
     expect(swaggerDocument.components.securitySchemes).toBeDefined();
     expect(
-      swaggerDocument.components.securitySchemes['COGNITO_AUTH'],
+      swaggerDocument.components.securitySchemes['JWT-auth'],
     ).toBeDefined();
     expect(fs.mkdirSync).toHaveBeenCalled();
     expect(fs.writeFileSync).toHaveBeenCalled();

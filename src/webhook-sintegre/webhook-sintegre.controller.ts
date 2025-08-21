@@ -17,6 +17,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Authentication, PublicRoute } from '@nestjs-cognito/auth';
 import { WebhookSintegreService } from './webhook-sintegre.service';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { WebhookSintegre } from './schemas/webhook-sintegre.schema';
@@ -32,12 +33,14 @@ type WebhookQuery = {
 
 @ApiTags('Webhook Sintegre')
 @Controller('api/webhooks')
+@Authentication()
 export class WebhookSintegreController {
   private readonly logger = new Logger(WebhookSintegreController.name);
 
   constructor(private readonly service: WebhookSintegreService) {}
 
   @Post('sintegre')
+  @PublicRoute()
   @ApiOperation({ summary: 'Receive webhook from Sintegre' })
   @ApiResponse({
     status: 201,

@@ -16,14 +16,16 @@ export function createSwaggerDocument(
     .setTitle(npm_package_name)
     .setDescription(npm_package_description)
     .setVersion(npm_package_version)
-    .addApiKey(
+    .addBearerAuth(
       {
-        type: 'apiKey',
-        name: 'x-cognito-token',
-        description: 'Enter x-cognito-token',
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Enter JWT token',
         in: 'header',
       },
-      'COGNITO_AUTH',
+      'JWT-auth',
     )
     .build();
 

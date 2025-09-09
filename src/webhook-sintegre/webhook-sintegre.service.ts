@@ -233,7 +233,11 @@ export class WebhookSintegreService {
             Authorization: authHeader,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ conf: productDetails, dag_run_id: dagRunId }),
+          body: JSON.stringify({
+            conf: productDetails,
+            dag_run_id: dagRunId,
+            logical_date: new Date().toISOString(),
+          }),
         });
 
         if (!response.ok) {

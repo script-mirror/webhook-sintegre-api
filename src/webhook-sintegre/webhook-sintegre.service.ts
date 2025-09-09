@@ -170,7 +170,7 @@ export class WebhookSintegreService {
 
   private async getAuthHeader(): Promise<string> {
     const airflowMiddleUrl: string =
-      this.configService.getOrThrow('AIRFLOW_MIDDLE_URL');
+      this.configService.getOrThrow('AIRFLOW_AUTH_URL');
     const airflowUser: string = this.configService.getOrThrow('AIRFLOW_USER');
     const airflowPassword: string =
       this.configService.getOrThrow('AIRFLOW_PASSWORD');

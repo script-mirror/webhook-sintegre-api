@@ -168,55 +168,116 @@ export class WebhookSintegreService {
     }
   }
 
+  private async getAuthHeader(): Promise<string> {
+    const airflowMiddleUrl: string =
+      this.configService.getOrThrow('AIRFLOW_MIDDLE_URL');
+    const airflowUser: string = this.configService.getOrThrow('AIRFLOW_USER');
+    const airflowPassword: string =
+      this.configService.getOrThrow('AIRFLOW_PASSWORD');
+    const response = await fetch(airflowMiddleUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: airflowUser,
+        password: airflowPassword,
+      }),
+    });
+    if (!response.ok) {
+      await response.text();
+      throw new Error(`Failed to authenticate with Airflow ${response.text()}`);
+    }
+
+    const data: Record<string, string> = await response.json();
+    return data.access_token;
+  }
+
   private async sendToAirflow(webhookId: string): Promise<void> {
     const webhook = await this.repository.findOne(webhookId);
     const s3Key = webhook.s3Key;
 
-    const airflowUrl = this.configService.getOrThrow('AIRFLOW_URL');
     const airflowUser = this.configService.getOrThrow('AIRFLOW_USER');
     const airflowPassword = this.configService.getOrThrow('AIRFLOW_PASSWORD');
-    const dagId = this.configService.getOrThrow('AIRFLOW_DAG_ID');
 
-    const triggerDagUrl = `${airflowUrl}/dags/${dagId}/dagRuns`;
-    const authHeader = `Basic ${Buffer.from(`${airflowUser}:${airflowPassword}`).toString('base64')}`;
+    const produtosAirflowMiddle = [
+      'Preliminar - Relatório Mensal de Limites de Intercâmbio',
+      'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
+    ];
+    const dagRunId = `external-api_webhook-${new Date(Date.now()).toISOString()}`;
 
     const productDetails = {
-        dataProduto: webhook.dataProduto,
-        macroProcesso: webhook.macroProcesso || '',
-        nome: webhook.nome,
-        periodicidade: new Date(webhook.periodicidade).toISOString(),
-        periodicidadeFinal: new Date(webhook.periodicidadeFinal).toISOString(),
-        processo: webhook.processo || '',
-        url: webhook.url,
-        s3Key: s3Key,
-        webhookId: webhookId,
-        filename: s3Key.substring(
-          s3Key.indexOf(webhookId) + webhookId.length + 1,
-        ),
+      dataProduto: webhook.dataProduto,
+      macroProcesso: webhook.macroProcesso || '',
+      nome: webhook.nome,
+      periodicidade: new Date(webhook.periodicidade).toISOString(),
+      periodicidadeFinal: new Date(webhook.periodicidadeFinal).toISOString(),
+      processo: webhook.processo || '',
+      url: webhook.url,
+      s3Key: s3Key,
+      webhookId: webhookId,
+      filename: s3Key.substring(
+        s3Key.indexOf(webhookId) + webhookId.length + 1,
+      ),
     };
+    if (produtosAirflowMiddle.includes(webhook.nome)) {
+      const airflowUrl = this.configService.getOrThrow('AIRFLOW_MIDDLE_URL');
+      const dagId = 'webhook-sintegre';
+      const triggerDagUrl = `${airflowUrl}/dags/${dagId}/dagRuns`;
+      const authHeader = `Bearer ${await this.getAuthHeader()}`;
 
-    try {
-      const response = await fetch(triggerDagUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: authHeader,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ conf: productDetails }),
-      });
+      try {
+        const response = await fetch(triggerDagUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ conf: productDetails, dag_run_id: dagRunId }),
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to trigger Airflow DAG: ${errorText}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to trigger Airflow DAG: ${errorText}`);
+        }
+
+        this.logger.log(
+          `Successfully triggered Airflow DAG ${dagId} for webhook ${webhookId}`,
+        );
+        await this.repository.updateStatus(webhookId, 'PROCESSED');
+      } catch (error) {
+        this.logger.error(`Error triggering Airflow DAG: ${error.message}`);
+        throw error;
       }
+    } else {
+      const airflowUrl = this.configService.getOrThrow('AIRFLOW_URL');
+      const dagId = this.configService.getOrThrow('AIRFLOW_DAG_ID');
+      const triggerDagUrl = `${airflowUrl}/dags/${dagId}/dagRuns`;
+      const authHeader = `Basic ${Buffer.from(`${airflowUser}:${airflowPassword}`).toString('base64')}`;
 
-      this.logger.log(
-        `Successfully triggered Airflow DAG ${dagId} for webhook ${webhookId}`,
-      );
-      await this.repository.updateStatus(webhookId, 'PROCESSED');
-    } catch (error) {
-      this.logger.error(`Error triggering Airflow DAG: ${error.message}`);
-      throw error;
+      try {
+        const response = await fetch(triggerDagUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: authHeader,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ conf: productDetails, dag_run_id: dagRunId }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Failed to trigger Airflow DAG: ${errorText}`);
+        }
+
+        this.logger.log(
+          `Successfully triggered Airflow DAG ${dagId} for webhook ${webhookId}`,
+        );
+        await this.repository.updateStatus(webhookId, 'PROCESSED');
+      } catch (error) {
+        this.logger.error(`Error triggering Airflow DAG: ${error.message}`);
+        throw error;
+      }
     }
   }
 

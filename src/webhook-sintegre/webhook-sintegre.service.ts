@@ -203,6 +203,7 @@ export class WebhookSintegreService {
     const produtosAirflowMiddle = [
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
+      'Carga por patamar - DECOMP',
     ];
     const dagRunId = `external-api_webhook-${new Date(Date.now()).toISOString()}`;
 

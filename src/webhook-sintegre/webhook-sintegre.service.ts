@@ -201,6 +201,7 @@ export class WebhookSintegreService {
     const airflowPassword = this.configService.getOrThrow('AIRFLOW_PASSWORD');
 
     const produtosAirflowMiddle = [
+      'Relatório de Acompanhamento Hidrológico',
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
       'Carga por patamar - DECOMP',

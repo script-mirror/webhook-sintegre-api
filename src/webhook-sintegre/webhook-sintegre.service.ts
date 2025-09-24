@@ -208,6 +208,9 @@ export class WebhookSintegreService {
       'Decks NEWAVE Preliminar',
       'DECK NEWAVE DEFINITIVO',
       'Previsões de carga mensal e por patamar - NEWAVE',
+      'Modelo ETA',
+      'Modelo ECMWF',
+      'Modelo GEFS',
     ];
     const dagRunId = `external-api_webhook-${new Date(Date.now()).toISOString()}`;
 

@@ -202,6 +202,9 @@ export class WebhookSintegreService {
 
     const produtosAirflowMiddle = [
       'Relatório de Acompanhamento Hidrológico',
+      'Modelo GEFS',
+      // 'Resultados preliminares não consistidos  (vazões semanais - PMO)',
+      // 'Relatório dos resultados finais consistidos da previsão diária (PDP)',
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
       'Carga por patamar - DECOMP',
@@ -210,7 +213,6 @@ export class WebhookSintegreService {
       'Previsões de carga mensal e por patamar - NEWAVE',
       'Modelo ETA',
       'Modelo ECMWF',
-      'Modelo GEFS',
     ];
     const dagRunId = `external-api_webhook-${new Date(Date.now()).toISOString()}`;
 

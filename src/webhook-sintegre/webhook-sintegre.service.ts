@@ -213,6 +213,7 @@ export class WebhookSintegreService {
       'Previsões de carga mensal e por patamar - NEWAVE',
       'Modelo ETA',
       'Modelo ECMWF',
+      'IPDO (Informativo Preliminar Diário da Operação)',
     ];
     const dagRunId = `external-api_webhook-${new Date(Date.now()).toISOString()}`;
 

@@ -204,7 +204,7 @@ export class WebhookSintegreService {
     const produtosAirflowMiddle = [
       'Relatório de Acompanhamento Hidrológico',
       'Modelo GEFS',
-      // 'Resultados preliminares não consistidos  (vazões semanais - PMO)',
+      'Resultados preliminares não consistidos  (vazões semanais - PMO)',
       // 'Relatório dos resultados finais consistidos da previsão diária (PDP)',
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',

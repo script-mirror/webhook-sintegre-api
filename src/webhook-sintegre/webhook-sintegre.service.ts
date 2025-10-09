@@ -121,10 +121,11 @@ export class WebhookSintegreService {
   ): Promise<void> {
     try {
       // Download file
-      const { filePath, fileName } =
+      let { filePath, fileName } =
         await this.fileDownloadService.downloadFile(fileUrl);
 
       try {
+        fileName = fileName.replace('_2° nível de contingência', '');
         // Generate S3 key based on webhook data and filename
         const s3Key = `webhooks/${nome}/${webhookId + '_' + fileName}`;
 

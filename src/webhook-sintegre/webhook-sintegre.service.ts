@@ -8,7 +8,7 @@ import { WebhookSintegreRepository } from './webhook-sintegre.repository';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { S3Service } from '../shared/services/s3.service';
 import { FileDownloadService } from '../shared/services/file-download.service';
-import { WebhookSintegre } from './schemas/webhook-sintegre.schema';
+import { WebhookSintegre } from './entities/webhook-sintegre.entity';
 import { unlink } from 'fs/promises';
 import {
   WebhookTimelineResponseDto,

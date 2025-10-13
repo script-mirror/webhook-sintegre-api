@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { WebhookSintegreService } from './webhook-sintegre.service';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
-import { WebhookSintegre } from './schemas/webhook-sintegre.schema';
+import { WebhookSintegre } from './entities/webhook-sintegre.entity';
 import { WebhookTimelineResponseDto } from './dto/webhook-sintegre-timeline.dto';
 
 type WebhookQuery = {

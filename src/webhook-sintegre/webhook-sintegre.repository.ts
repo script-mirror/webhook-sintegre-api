@@ -1,10 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  WebhookSintegre,
-  WebhookSintegreDocument,
-} from './schemas/webhook-sintegre.schema';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, Between, LessThanOrEqual } from 'typeorm';
+import { WebhookSintegre } from './entities/webhook-sintegre.entity';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { RetryInfo } from './types/webhook-retry.types';
 
@@ -22,29 +19,23 @@ type WebhookQuery = {
   downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
 };
 
-type WebhookMetricsStage = {
-  _id?: string | null;
-  createdAt?: {
-    $gte?: Date;
-    $lte?: Date;
-  };
-};
+
 
 @Injectable()
 export class WebhookSintegreRepository {
   private readonly logger = new Logger(WebhookSintegreRepository.name);
 
   constructor(
-    @InjectModel(WebhookSintegre.name)
-    private webhookModel: Model<WebhookSintegreDocument>,
+    @InjectRepository(WebhookSintegre)
+    private webhookRepository: Repository<WebhookSintegre>,
   ) {}
 
   async create(
     createDto: CreateWebhookSintegreDto & Record<string, unknown>,
   ): Promise<WebhookSintegre> {
     try {
-      const webhook = new this.webhookModel(createDto);
-      return await webhook.save();
+      const webhook = this.webhookRepository.create(createDto);
+      return await this.webhookRepository.save(webhook);
     } catch (error) {
       this.logger.error(`Failed to create webhook: ${error.message}`);
       throw error;
@@ -53,7 +44,26 @@ export class WebhookSintegreRepository {
 
   async findAll(query: WebhookQuery = {}): Promise<WebhookSintegre[]> {
     try {
-      return await this.webhookModel.find(query).sort({ createdAt: -1 }).exec();
+      const where: Record<string, any> = {};
+      
+      if (query.downloadStatus) {
+        where.downloadStatus = query.downloadStatus;
+      }
+      
+      if (query.createdAt) {
+        if (query.createdAt.$gte && query.createdAt.$lte) {
+          where.createdAt = Between(query.createdAt.$gte, query.createdAt.$lte);
+        } else if (query.createdAt.$gte) {
+          where.createdAt = { $gte: query.createdAt.$gte };
+        } else if (query.createdAt.$lte) {
+          where.createdAt = LessThanOrEqual(query.createdAt.$lte);
+        }
+      }
+
+      return await this.webhookRepository.find({
+        where,
+        order: { createdAt: 'DESC' },
+      });
     } catch (error) {
       this.logger.error(`Failed to fetch webhooks: ${error.message}`);
       throw error;
@@ -62,7 +72,7 @@ export class WebhookSintegreRepository {
 
   async findOne(id: string): Promise<WebhookSintegre> {
     try {
-      return await this.webhookModel.findById(id).lean().exec();
+      return await this.webhookRepository.findOne({ where: { id } });
     } catch (error) {
       this.logger.error(`Failed to fetch webhook ${id}: ${error.message}`);
       throw error;
@@ -74,9 +84,8 @@ export class WebhookSintegreRepository {
     updateDto: WebhookUpdateData,
   ): Promise<WebhookSintegre> {
     try {
-      return await this.webhookModel
-        .findByIdAndUpdate(id, updateDto, { new: true })
-        .exec();
+      await this.webhookRepository.update({ id }, updateDto);
+      return await this.webhookRepository.findOne({ where: { id } });
     } catch (error) {
       this.logger.error(`Failed to update webhook ${id}: ${error.message}`);
       throw error;
@@ -93,9 +102,8 @@ export class WebhookSintegreRepository {
       if (errorMessage) {
         update.errorMessage = errorMessage;
       }
-      return await this.webhookModel
-        .findByIdAndUpdate(id, update, { new: true })
-        .exec();
+      await this.webhookRepository.update({ id }, update);
+      return await this.webhookRepository.findOne({ where: { id } });
     } catch (error) {
       this.logger.error(
         `Failed to update webhook status ${id}: ${error.message}`,
@@ -106,66 +114,56 @@ export class WebhookSintegreRepository {
 
   async getMetrics(startDate?: Date, endDate?: Date) {
     try {
-      const matchStage: WebhookMetricsStage = {};
+      const queryBuilder = this.webhookRepository.createQueryBuilder('webhook');
+      
       if (startDate || endDate) {
-        matchStage.createdAt = {};
-        if (startDate) matchStage.createdAt.$gte = startDate;
-        if (endDate) matchStage.createdAt.$lte = endDate;
+        if (startDate && endDate) {
+          queryBuilder.andWhere('webhook.createdAt BETWEEN :startDate AND :endDate', {
+            startDate,
+            endDate,
+          });
+        } else if (startDate) {
+          queryBuilder.andWhere('webhook.createdAt >= :startDate', { startDate });
+        } else if (endDate) {
+          queryBuilder.andWhere('webhook.createdAt <= :endDate', { endDate });
+        }
       }
 
-      const [totalStats, dailyStats] = await Promise.all([
-        this.webhookModel.aggregate([
-          { $match: matchStage },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: 1 },
-              success: {
-                $sum: {
-                  $cond: [{ $eq: ['$downloadStatus', 'SUCCESS'] }, 1, 0],
-                },
-              },
-              failed: {
-                $sum: {
-                  $cond: [{ $eq: ['$downloadStatus', 'FAILED'] }, 1, 0],
-                },
-              },
-              pending: {
-                $sum: {
-                  $cond: [{ $eq: ['$downloadStatus', 'PENDING'] }, 1, 0],
-                },
-              },
-            },
-          },
-        ]),
+      // Get total stats
+      const totalStatsQuery = queryBuilder
+        .clone()
+        .select([
+          'COUNT(*) as total',
+          'SUM(CASE WHEN webhook.downloadStatus = "SUCCESS" THEN 1 ELSE 0 END) as success',
+          'SUM(CASE WHEN webhook.downloadStatus = "FAILED" THEN 1 ELSE 0 END) as failed',
+          'SUM(CASE WHEN webhook.downloadStatus = "PENDING" THEN 1 ELSE 0 END) as pending',
+        ]);
 
-        this.webhookModel.aggregate([
-          { $match: matchStage },
-          {
-            $group: {
-              _id: {
-                $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
-              },
-              count: { $sum: 1 },
-              success: {
-                $sum: {
-                  $cond: [{ $eq: ['$downloadStatus', 'SUCCESS'] }, 1, 0],
-                },
-              },
-              failed: {
-                $sum: {
-                  $cond: [{ $eq: ['$downloadStatus', 'FAILED'] }, 1, 0],
-                },
-              },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]),
+      // Get daily stats
+      const dailyStatsQuery = queryBuilder
+        .clone()
+        .select([
+          'DATE(webhook.createdAt) as date',
+          'COUNT(*) as count',
+          'SUM(CASE WHEN webhook.downloadStatus = "SUCCESS" THEN 1 ELSE 0 END) as success',
+          'SUM(CASE WHEN webhook.downloadStatus = "FAILED" THEN 1 ELSE 0 END) as failed',
+        ])
+        .groupBy('DATE(webhook.createdAt)')
+        .orderBy('date', 'ASC');
+
+      const [totalStats, dailyStats] = await Promise.all([
+        totalStatsQuery.getRawOne(),
+        dailyStatsQuery.getRawMany(),
       ]);
 
       return {
-        total: totalStats[0] || { total: 0, success: 0, failed: 0, pending: 0 },
-        daily: dailyStats,
+        total: totalStats || { total: 0, success: 0, failed: 0, pending: 0 },
+        daily: dailyStats.map((stat) => ({
+          _id: stat.date,
+          count: parseInt(stat.count),
+          success: parseInt(stat.success),
+          failed: parseInt(stat.failed),
+        })),
       };
     } catch (error) {
       this.logger.error(`Failed to get metrics: ${error.message}`);
@@ -175,10 +173,9 @@ export class WebhookSintegreRepository {
 
   async getTimeline(): Promise<WebhookSintegre[]> {
     try {
-      return await this.webhookModel
-        .find()
-        .sort({ nome: 1, createdAt: -1 })
-        .exec();
+      return await this.webhookRepository.find({
+        order: { nome: 'ASC', createdAt: 'DESC' },
+      });
     } catch (error) {
       this.logger.error(`Failed to fetch webhook timeline: ${error.message}`);
       throw error;
@@ -190,12 +187,30 @@ export class WebhookSintegreRepository {
     createdAt?: { $gte?: Date; $lte?: Date };
   }): Promise<WebhookSintegre[]> {
     try {
-      return await this.webhookModel
-        .find(query)
-        .sort({ nome: 1, createdAt: -1 })
-        .exec();
+      const where: Record<string, any> = {};
+      
+      if (query.nome) {
+        where.nome = query.nome;
+      }
+      
+      if (query.createdAt) {
+        if (query.createdAt.$gte && query.createdAt.$lte) {
+          where.createdAt = Between(query.createdAt.$gte, query.createdAt.$lte);
+        } else if (query.createdAt.$gte) {
+          where.createdAt = { $gte: query.createdAt.$gte };
+        } else if (query.createdAt.$lte) {
+          where.createdAt = LessThanOrEqual(query.createdAt.$lte);
+        }
+      }
+
+      return await this.webhookRepository.find({
+        where,
+        order: { nome: 'ASC', createdAt: 'DESC' },
+      });
     } catch (error) {
-      this.logger.error(`Failed to fetch filtered webhook timeline: ${error.message}`);
+      this.logger.error(
+        `Failed to fetch filtered webhook timeline: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -205,13 +220,11 @@ export class WebhookSintegreRepository {
     retryData: RetryInfo & { errorMessage: string },
   ): Promise<WebhookSintegre> {
     try {
-      return await this.webhookModel
-        .findByIdAndUpdate(
-          id,
-          { ...retryData, downloadStatus: 'FAILED' },
-          { new: true },
-        )
-        .exec();
+      await this.webhookRepository.update(
+        { id },
+        { ...retryData, downloadStatus: 'FAILED' },
+      );
+      return await this.webhookRepository.findOne({ where: { id } });
     } catch (error) {
       this.logger.error(
         `Failed to update webhook retry info ${id}: ${error.message}`,

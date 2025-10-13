@@ -1,4 +1,4 @@
-import { WebhookSintegre } from '../schemas/webhook-sintegre.schema';
+import { WebhookSintegre } from '../entities/webhook-sintegre.entity';
 
 export class WebhookTimelineEvent extends WebhookSintegre {}
 

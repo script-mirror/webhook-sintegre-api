@@ -8,7 +8,7 @@ import { HttpModule } from '@nestjs/axios';
 import { HealthModule } from './health/health.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpRequestBodyInterceptor } from './utils/http.interceptor';
-import { MongooseModule } from '@nestjs/mongoose';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
 
 @Module({
@@ -80,13 +80,10 @@ import databaseConfig from './config/database.config';
       },
       exclude: ['/health/liveness', '/health/readiness'],
     }),
-    MongooseModule.forRootAsync({
+    TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('DATABASE_URI'),
-        retryAttempts: 3,
-        retryDelay: 1000,
-      }),
+      useFactory: async (configService: ConfigService) =>
+        configService.get('database'),
       inject: [ConfigService],
     }),
   ],

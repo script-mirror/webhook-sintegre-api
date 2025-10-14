@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, LessThanOrEqual } from 'typeorm';
+import { Repository, Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { WebhookSintegre } from './entities/webhook-sintegre.entity';
 import { CreateWebhookSintegreDto } from './dto/create-webhook-sintegre.dto';
 import { RetryInfo } from './types/webhook-retry.types';
@@ -18,8 +18,6 @@ type WebhookQuery = {
   };
   downloadStatus?: 'PENDING' | 'SUCCESS' | 'FAILED' | 'PROCESSED';
 };
-
-
 
 @Injectable()
 export class WebhookSintegreRepository {
@@ -44,17 +42,17 @@ export class WebhookSintegreRepository {
 
   async findAll(query: WebhookQuery = {}): Promise<WebhookSintegre[]> {
     try {
-      const where: Record<string, any> = {};
-      
+      const where: Record<string, unknown> = {};
+
       if (query.downloadStatus) {
         where.downloadStatus = query.downloadStatus;
       }
-      
+
       if (query.createdAt) {
         if (query.createdAt.$gte && query.createdAt.$lte) {
           where.createdAt = Between(query.createdAt.$gte, query.createdAt.$lte);
         } else if (query.createdAt.$gte) {
-          where.createdAt = { $gte: query.createdAt.$gte };
+          where.createdAt = MoreThanOrEqual(query.createdAt.$gte);
         } else if (query.createdAt.$lte) {
           where.createdAt = LessThanOrEqual(query.createdAt.$lte);
         }
@@ -115,15 +113,20 @@ export class WebhookSintegreRepository {
   async getMetrics(startDate?: Date, endDate?: Date) {
     try {
       const queryBuilder = this.webhookRepository.createQueryBuilder('webhook');
-      
+
       if (startDate || endDate) {
         if (startDate && endDate) {
-          queryBuilder.andWhere('webhook.createdAt BETWEEN :startDate AND :endDate', {
-            startDate,
-            endDate,
-          });
+          queryBuilder.andWhere(
+            'webhook.createdAt BETWEEN :startDate AND :endDate',
+            {
+              startDate,
+              endDate,
+            },
+          );
         } else if (startDate) {
-          queryBuilder.andWhere('webhook.createdAt >= :startDate', { startDate });
+          queryBuilder.andWhere('webhook.createdAt >= :startDate', {
+            startDate,
+          });
         } else if (endDate) {
           queryBuilder.andWhere('webhook.createdAt <= :endDate', { endDate });
         }
@@ -187,17 +190,17 @@ export class WebhookSintegreRepository {
     createdAt?: { $gte?: Date; $lte?: Date };
   }): Promise<WebhookSintegre[]> {
     try {
-      const where: Record<string, any> = {};
-      
+      const where: Record<string, unknown> = {};
+
       if (query.nome) {
         where.nome = query.nome;
       }
-      
+
       if (query.createdAt) {
         if (query.createdAt.$gte && query.createdAt.$lte) {
           where.createdAt = Between(query.createdAt.$gte, query.createdAt.$lte);
         } else if (query.createdAt.$gte) {
-          where.createdAt = { $gte: query.createdAt.$gte };
+          where.createdAt = MoreThanOrEqual(query.createdAt.$gte);
         } else if (query.createdAt.$lte) {
           where.createdAt = LessThanOrEqual(query.createdAt.$lte);
         }

@@ -217,6 +217,8 @@ export class WebhookSintegreService {
       'IPDO (Informativo Preliminar Diário da Operação)',
       'Deck Preliminar DECOMP - Valor Esperado',
       'Notas Técnicas - Medio Prazo',
+      'DECKS DA PREVISÃO DE GERAÇÃO EÓLICA SEMANAL WEOL-SM',
+      'Precipitação por Satélite – ONS',
     ];
     const dagRunId = `external-api_webhook-${new Date(Date.now()).toISOString()}`;
 

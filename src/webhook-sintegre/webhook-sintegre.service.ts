@@ -209,7 +209,7 @@ export class WebhookSintegreService {
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
       'Carga por patamar - DECOMP',
-      'Decks NEWAVE Preliminar',
+      'Deck NEWAVE Preliminar',
       'DECK NEWAVE DEFINITIVO',
       'Previsões de carga mensal e por patamar - NEWAVE',
       'Modelo ETA',

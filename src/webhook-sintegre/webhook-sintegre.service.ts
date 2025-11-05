@@ -206,6 +206,7 @@ export class WebhookSintegreService {
       'Modelo GEFS',
       'Resultados preliminares não consistidos  (vazões semanais - PMO)',
       'Resultados preliminares consistidos (vazões semanais - PMO)',
+      'Resultados finais consistidos (vazões diárias - PDP)',
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
       'Carga por patamar - DECOMP',

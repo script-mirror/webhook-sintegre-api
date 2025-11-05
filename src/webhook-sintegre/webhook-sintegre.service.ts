@@ -205,7 +205,7 @@ export class WebhookSintegreService {
       'Relatório de Acompanhamento Hidrológico',
       'Modelo GEFS',
       'Resultados preliminares não consistidos  (vazões semanais - PMO)',
-      'Relatório dos resultados finais consistidos da previsão diária (PDP)',
+      'Resultados preliminares consistidos (vazões semanais - PMO)',
       'Preliminar - Relatório Mensal de Limites de Intercâmbio',
       'Relatório Mensal de Limites de Intercâmbio para o Modelo DECOMP',
       'Carga por patamar - DECOMP',
